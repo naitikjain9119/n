@@ -1,0 +1,1089 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Recorder Pro</title>
+    <style>
+        /* === Material Design 3 Style Settings & Variables === */
+        :root {
+            --bg-color: #FAFAFD;
+            --surface-color: #F1EFF8;
+            --surface-variant: #E3E1E9;
+            --text-color: #1A1A1E;
+            --text-secondary: #48464E;
+            --primary: #4B00B4;
+            --on-primary: #FFFFFF;
+            --primary-container: #EADDFF;
+            --on-primary-container: #21005D;
+            --secondary: #625B71;
+            --error: #BA1A1A;
+            --record-red: #DA3040;
+            --navbar-height: 80px;
+            --spacing-md: 16px;
+            --border-radius-xl: 28px;
+            --border-radius-lg: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Dark Theme Settings */
+        .dark-mode {
+            --bg-color: #141218;
+            --surface-color: #211F26;
+            --surface-variant: #49454F;
+            --text-color: #E6E0E9;
+            --text-secondary: #CAC4D0;
+            --primary: #D0BCFF;
+            --on-primary: #381E72;
+            --primary-container: #4F378B;
+            --on-primary-container: #EADDFF;
+            --secondary: #CCC2DC;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* Use single page app internal scrolling */
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === Utility & Component Classes === */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .flex { display: flex; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; }
+        .flex-column { display: flex; flex-direction: column; }
+        
+        button { border: none; background: transparent; color: inherit; cursor: pointer; outline: none; }
+        button:active { opacity: 0.7; }
+        input[type="text"], select { 
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: var(--border-radius-lg);
+            border: 1px solid var(--surface-variant); background: var(--surface-color); color: var(--text-color);
+            font-size: 16px; 
+        }
+        
+        /* === SVG Icon Styles === */
+        svg { fill: currentColor; width: 24px; height: 24px; transition: 0.2s; }
+        .icon-lg { width: 48px; height: 48px; }
+
+        /* === App Splash Screen === */
+        #splash-screen {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
+            z-index: 9999;
+        }
+        .splash-content { transform: scale(1); transition: 0.5s ease; text-align: center; }
+        .splash-logo { color: var(--primary); margin-bottom: 20px; }
+        .splash-title { font-size: 2rem; font-weight: bold; letter-spacing: 1px; color: var(--text-color);}
+
+        /* === Top App Bar === */
+        header { padding: 16px var(--spacing-md); }
+        .app-bar-title { font-size: 1.5rem; font-weight: 600; }
+
+        /* === Main Content Area === */
+        main {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            padding: 0 var(--spacing-md);
+            padding-bottom: calc(var(--navbar-height) + 120px); /* Leave room for bottom nav + mini player */
+        }
+        .screen-container { width: 100%; height: 100%; display: flex; flex-direction: column; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* === Record Screen === */
+        #home-screen { align-items: center; justify-content: flex-start; padding-top: 10vh; }
+        .record-info { text-align: center; margin-bottom: 30px; }
+        .timer-display { font-size: 3.5rem; font-family: monospace; font-weight: 300; margin: 20px 0; }
+        .status-badge { 
+            background: var(--surface-color); padding: 8px 16px; border-radius: 20px; 
+            font-size: 14px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500;
+        }
+        .dot { width: 10px; height: 10px; background: var(--secondary); border-radius: 50%; }
+        .recording-dot { background: var(--record-red); animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.4; transform: scale(0.8); } to { opacity: 1; transform: scale(1.1); } }
+        
+        .mic-container { position: relative; margin-top: 40px; margin-bottom: 30px; }
+        .mic-wave-circle {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            border-radius: 50%; background: var(--record-red); opacity: 0.15;
+            transition: width 0.1s, height 0.1s; width: 0; height: 0; z-index: 1;
+        }
+        .record-btn {
+            background: var(--primary); color: var(--on-primary); width: 90px; height: 90px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(75, 0, 180, 0.4); z-index: 2; position: relative; transition: 0.2s;
+        }
+        .record-btn.active { background: var(--record-red); box-shadow: 0 4px 20px rgba(218, 48, 64, 0.5); }
+        .controls-row { display: flex; gap: 30px; justify-content: center; height: 64px; }
+        .ctrl-btn {
+            width: 64px; height: 64px; border-radius: 50%; background: var(--surface-color); color: var(--primary);
+            display: flex; align-items: center; justify-content: center; transition: transform 0.2s;
+        }
+
+        /* === Audio Visualizer === */
+        canvas#visualizer { width: 100%; height: 100px; display: block; margin: 20px 0; }
+
+        /* === Recording Item (List & Cards) === */
+        .recording-card {
+            background: var(--surface-color); border-radius: var(--border-radius-lg); padding: 16px;
+            margin-bottom: 12px; display: flex; align-items: center; position: relative;
+        }
+        .recording-details { flex: 1; margin-left: 16px; overflow: hidden; }
+        .recording-title { font-weight: 600; font-size: 1.1rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;}
+        .recording-meta { color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px; display: flex; gap: 8px;}
+        .icon-btn { padding: 8px; color: var(--text-secondary); }
+
+        /* === Search System === */
+        .search-bar { position: relative; margin-bottom: var(--spacing-md); }
+        .search-bar input { padding-left: 40px; border: none; background: var(--surface-variant); border-radius: 50px; }
+        .search-icon { position: absolute; left: 12px; top: 12px; color: var(--text-secondary); }
+
+        /* === Mini Player (Bottom Fixed overlay) === */
+        #player-sheet {
+            position: fixed; bottom: var(--navbar-height); left: 0; right: 0; background: var(--primary-container); color: var(--on-primary-container);
+            border-top-left-radius: var(--border-radius-xl); border-top-right-radius: var(--border-radius-xl);
+            padding: 16px; z-index: 100; transform: translateY(150%); transition: transform 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        #player-sheet.visible { transform: translateY(0); }
+        .player-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600;}
+        .progress-container { display: flex; align-items: center; gap: 10px; margin-top: 15px;}
+        input[type=range] { flex: 1; -webkit-appearance: none; background: transparent; height: 16px; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: var(--surface-color); border-radius: 4px; }
+        input[type=range]::-webkit-slider-thumb { height: 16px; width: 16px; border-radius: 50%; background: var(--primary); -webkit-appearance: none; margin-top: -5px; }
+        .player-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 10px;}
+        .play-speed-btn { font-weight: bold; background: var(--surface-color); padding: 4px 12px; border-radius: 20px; font-size: 14px;}
+        .playback-btn-main { width: 48px; height: 48px; background: var(--primary); color: white; border-radius: 50%; }
+
+        /* === Modals === */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.3s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal {
+            background: var(--bg-color); width: 85%; max-width: 400px; padding: 24px; border-radius: var(--border-radius-xl);
+        }
+        .modal-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 16px;}
+        .modal-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 24px; }
+        .btn-text { font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;}
+
+        /* === Settings Screen Specifics === */
+        .settings-group { margin-bottom: 24px; }
+        .settings-title { color: var(--primary); font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px;}
+        .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--surface-variant);}
+        .toggle-switch { width: 44px; height: 24px; background: var(--surface-variant); border-radius: 20px; position: relative; transition: 0.3s;}
+        .toggle-switch.on { background: var(--primary); }
+        .toggle-circle { width: 20px; height: 20px; background: var(--bg-color); border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.3s; }
+        .toggle-switch.on .toggle-circle { transform: translateX(20px); }
+
+        /* === Folders View === */
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px;}
+        .folder-card { background: var(--surface-color); padding: 16px; border-radius: var(--border-radius-lg); text-align: center; }
+        .folder-icon { color: var(--primary); margin-bottom: 8px; width: 40px; height: 40px; }
+
+        /* === Storage Stats View === */
+        .storage-bar-bg { width: 100%; height: 8px; background: var(--surface-variant); border-radius: 4px; overflow: hidden; margin: 10px 0;}
+        .storage-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 1s; }
+
+        /* === Toasts (Notifications) === */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; }
+        .toast { background: var(--text-color); color: var(--bg-color); padding: 12px 24px; border-radius: 24px; font-weight: 500; margin-bottom: 8px; opacity: 0; animation: toastEnter 0.3s forwards;}
+        @keyframes toastEnter { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* === Bottom Navigation (MD3 style) === */
+        nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: var(--navbar-height);
+            background: var(--surface-color); display: flex; justify-content: space-around;
+            align-items: center; border-top: 1px solid var(--surface-variant); z-index: 10;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 64px; height: 64px; border-radius: 16px; gap: 4px; color: var(--text-secondary); transition: 0.3s;
+        }
+        .nav-item.active { background: var(--primary-container); color: var(--on-primary-container); }
+        .nav-item.active .nav-label { font-weight: bold; }
+        .nav-label { font-size: 11px; }
+
+    </style>
+</head>
+<body class="system-theme">
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen" class="flex-center">
+        <div class="splash-content">
+            <svg class="splash-logo icon-lg" viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6.5 6.92V21h1v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+            <div class="splash-title">Voice Recorder Pro</div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast-container" class="flex-column"></div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="hidden" style="width: 100%; height: 100%;">
+        
+        <!-- HEADER -->
+        <header class="flex-between">
+            <div class="app-bar-title" id="top-title">Home</div>
+        </header>
+
+        <main id="main-content">
+            <!-- DYNAMIC SCREEN MOUNTS HERE -->
+        </main>
+
+        <!-- MINI PLAYER OVERLAY -->
+        <div id="player-sheet">
+            <div class="player-header">
+                <div style="flex:1; overflow:hidden;">
+                    <div id="player-title" class="recording-title" style="font-size:1rem;">Audio_Record</div>
+                    <div id="player-speed-text" style="font-size:0.75rem; color:var(--text-secondary);">Speed: 1x</div>
+                </div>
+                <button class="icon-btn" onclick="UI.hidePlayer()"><svg viewBox="0 0 24 24"><path d="M6 18l12-12m0 12L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            </div>
+            
+            <div class="progress-container">
+                <span id="player-time-curr" style="font-size:12px;">00:00</span>
+                <input type="range" id="player-seeker" min="0" max="100" value="0" step="0.1">
+                <span id="player-time-total" style="font-size:12px;">00:00</span>
+            </div>
+
+            <div class="player-controls">
+                <button class="play-speed-btn" onclick="AudioPlayer.cycleSpeed()" title="Speed Control" id="btn-speed">1x</button>
+                <button class="icon-btn" onclick="AudioPlayer.skip(-10)"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+                <button class="flex-center playback-btn-main" id="btn-play-pause" onclick="AudioPlayer.togglePlay()">
+                   <svg viewBox="0 0 24 24" id="play-icon"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button class="icon-btn" onclick="AudioPlayer.skip(10)"><svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+                <button class="icon-btn" onclick="AudioPlayer.stop()"><svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg></button>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <nav id="bottom-nav">
+            <button class="nav-item active" data-tab="home" onclick="UI.navigate('home')">
+                <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6.5 6.92V21h1v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+                <span class="nav-label">Record</span>
+            </button>
+            <button class="nav-item" data-tab="list" onclick="UI.navigate('list')">
+                <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                <span class="nav-label">List</span>
+            </button>
+            <button class="nav-item" data-tab="favorites" onclick="UI.navigate('favorites')">
+                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <span class="nav-label">Saved</span>
+            </button>
+            <button class="nav-item" data-tab="folders" onclick="UI.navigate('folders')">
+                <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                <span class="nav-label">Folders</span>
+            </button>
+            <button class="nav-item" data-tab="settings" onclick="UI.navigate('settings')">
+                <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49-.12-.64l2.11 1.65c-.04.32-.07.65-.07.98 0 .33.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                <span class="nav-label">Config</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- HTML SCREEN TEMPLATES (Parsed via JS) -->
+    <template id="tpl-home">
+        <div id="home-screen" class="screen-container">
+            <div class="record-info">
+                <div class="status-badge" id="rec-status-badge">
+                    <div class="dot" id="rec-dot"></div><span id="rec-status-txt">Ready to record</span>
+                </div>
+                <div class="timer-display" id="rec-timer">00:00:00</div>
+                <div style="color:var(--text-secondary); font-size: 14px;" id="storage-txt">Checking Storage...</div>
+            </div>
+
+            <!-- Visualization Canvas -->
+            <canvas id="visualizer" width="300" height="100"></canvas>
+
+            <div class="mic-container">
+                <div class="mic-wave-circle" id="mic-wave"></div>
+                <button class="record-btn" id="btn-record-main" onclick="Engine.toggleRecord()">
+                    <svg viewBox="0 0 24 24" id="rec-icon" class="icon-lg"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6.5 6.92V21h1v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+                </button>
+            </div>
+
+            <div class="controls-row hidden" id="rec-ctrls">
+                <button class="ctrl-btn" onclick="Engine.pauseRecord()" title="Pause/Resume">
+                    <svg viewBox="0 0 24 24" id="pause-icon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <button class="ctrl-btn" onclick="Engine.stopRecord()" title="Stop & Save">
+                    <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                </button>
+            </div>
+            
+            <div style="margin-top: 40px;" class="flex-column flex-center">
+                <h3 id="stat-count">0</h3>
+                <span style="font-size:12px; color:var(--text-secondary)">Total Recordings</span>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-list">
+        <div class="screen-container">
+            <div class="search-bar">
+                <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" id="search-input" placeholder="Search recordings..." oninput="UI.renderList(this.value)">
+            </div>
+            <div id="recording-list-area" class="flex-column">
+                <!-- Dynamically populated cards -->
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-favorites">
+        <div class="screen-container">
+            <div id="favorites-list-area" class="flex-column">
+                <!-- Favorites Cards -->
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-folders">
+        <div class="screen-container">
+            <div class="flex-between" style="margin-bottom:16px;">
+                <h3 style="font-weight: 500;">Manage Folders</h3>
+                <button class="btn-text" onclick="Modals.show('modal-folder-create')">+ New Folder</button>
+            </div>
+            <div id="folders-grid" class="folder-grid"></div>
+        </div>
+    </template>
+
+    <template id="tpl-settings">
+        <div class="screen-container">
+            <div class="settings-group">
+                <div class="settings-title">Recording Settings</div>
+                <div class="settings-item">
+                    <span>Format Wrapper</span>
+                    <select id="cfg-format" onchange="Settings.update('format', this.value)" style="width:120px;">
+                        <option value="audio/webm">WEBM</option>
+                        <option value="audio/mp4">MP4/M4A</option>
+                    </select>
+                </div>
+                <div class="settings-item">
+                    <span>Audio Quality</span>
+                    <select id="cfg-quality" onchange="Settings.update('quality', this.value)" style="width:120px;">
+                        <option value="64000">Low (64k)</option>
+                        <option value="128000">Medium (128k)</option>
+                        <option value="192000">High (192k)</option>
+                        <option value="320000">Studio (320k)</option>
+                    </select>
+                </div>
+                <div class="settings-item">
+                    <span>Background Audio</span>
+                    <div class="toggle-switch on" id="toggle-bg"><div class="toggle-circle"></div></div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-title">App Settings</div>
+                <div class="settings-item">
+                    <span>Dark Theme</span>
+                    <select id="cfg-theme" onchange="Settings.setTheme(this.value)" style="width:120px;">
+                        <option value="system">System</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+                <div class="settings-item" onclick="Modals.show('modal-storage-info')">
+                    <span>Storage Info</span>
+                    <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                </div>
+                <div class="settings-item" style="color:var(--error);" onclick="App.clearCache()">
+                    <span>Clear Data & Cache</span>
+                </div>
+            </div>
+            <div class="text-center" style="margin-top: 30px; font-size:12px; color:var(--text-secondary)">Voice Recorder Pro v1.0.0 (Offline PWA Engine)</div>
+        </div>
+    </template>
+
+    <!-- Global Modals System -->
+    <div class="modal-overlay" id="modal-folder-create">
+        <div class="modal">
+            <div class="modal-title">Create Folder</div>
+            <input type="text" id="inp-folder-name" placeholder="Folder Name">
+            <div class="modal-actions">
+                <button class="btn-text" style="color:var(--text-secondary)" onclick="Modals.hide()">Cancel</button>
+                <button class="btn-text" onclick="Folders.create()">Create</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-storage-info">
+        <div class="modal">
+            <div class="modal-title">Storage Information</div>
+            <div>
+                <span id="st-used" style="font-weight:bold;">0 MB</span> used of <span id="st-total">...</span>
+            </div>
+            <div class="storage-bar-bg"><div class="storage-bar-fill" id="st-bar"></div></div>
+            <div class="modal-actions">
+                <button class="btn-text" onclick="Modals.hide()">Close</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-move-folder">
+        <div class="modal">
+            <div class="modal-title">Move Recording</div>
+            <select id="sel-move-folder"></select>
+            <div class="modal-actions">
+                <button class="btn-text" style="color:var(--text-secondary)" onclick="Modals.hide()">Cancel</button>
+                <button class="btn-text" onclick="App.moveActiveRecording()">Move</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Voice Recorder Pro - Architecture (MVVM/Single File SPA Simulation)
+         * - Tech: HTML5, CSS3, ES6 Vanilla JS. 
+         * - Storage: IndexedDB API for binary Blobs, localStorage for simple keys.
+         * - APIs: WebAudio, MediaRecorder, ScreenWakeLock (background execution), FileSharing
+         */
+
+        /* -------------------------------------------------------------
+           UTILITIES
+           ------------------------------------------------------------- */
+        const $ = id => document.getElementById(id);
+        
+        function formatTime(sec_num) {
+            sec_num = Math.floor(sec_num);
+            let hours   = Math.floor(sec_num / 3600);
+            let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+            let seconds = sec_num - (hours * 3600) - (minutes * 60);
+            let result = "";
+            if(hours > 0) result += (hours < 10 ? "0" + hours : hours) + ":";
+            result += (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+            return result;
+        }
+
+        function bytesToSize(bytes) {
+            let sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            if (bytes == 0) return '0 Byte';
+            let i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+            return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+        }
+
+        const Toast = {
+            show(message) {
+                const tc = $('toast-container');
+                const t = document.createElement('div');
+                t.className = 'toast'; t.textContent = message;
+                tc.appendChild(t);
+                setTimeout(() => {
+                    t.style.animation = "toastEnter 0.3s forwards reverse";
+                    setTimeout(() => t.remove(), 300);
+                }, 3000);
+            }
+        };
+
+        const Modals = {
+            currentMoveId: null,
+            show(id, payload = null) {
+                $(id).classList.add('active');
+                if(id === 'modal-move-folder') {
+                    this.currentMoveId = payload;
+                    Folders.populateMoveSelect();
+                } else if(id === 'modal-storage-info') {
+                    StorageStats.update();
+                }
+            },
+            hide() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active')); }
+        };
+
+        /* -------------------------------------------------------------
+           DATABASE LAYER (IndexedDB via Promises) -> ROOM DB Sim
+           ------------------------------------------------------------- */
+        const DB = {
+            db: null,
+            init() {
+                return new Promise((resolve, reject) => {
+                    let req = indexedDB.open("VoiceRecorderProDB", 1);
+                    req.onupgradeneeded = (e) => {
+                        let db = e.target.result;
+                        if (!db.objectStoreNames.contains("recordings")) {
+                            let os = db.createObjectStore("recordings", { keyPath: "id", autoIncrement:true });
+                            os.createIndex("timestamp", "timestamp", { unique: false });
+                            os.createIndex("isFav", "isFav", { unique: false });
+                            os.createIndex("folder", "folder", { unique: false });
+                        }
+                    };
+                    req.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+                    req.onerror = (e) => { reject(e); };
+                });
+            },
+            async getAll() {
+                return new Promise((res, rej) => {
+                    let trans = this.db.transaction(["recordings"], "readonly");
+                    let req = trans.objectStore("recordings").getAll();
+                    req.onsuccess = e => res(e.target.result.sort((a,b)=>b.timestamp-a.timestamp));
+                    req.onerror = e => rej(e);
+                });
+            },
+            async insert(record) {
+                return new Promise((res, rej) => {
+                    let req = this.db.transaction(["recordings"], "readwrite").objectStore("recordings").add(record);
+                    req.onsuccess = e => res(e.target.result); req.onerror = e => rej(e);
+                });
+            },
+            async update(id, modifications) {
+                return new Promise(async (res, rej) => {
+                    let store = this.db.transaction(["recordings"], "readwrite").objectStore("recordings");
+                    store.get(id).onsuccess = (e) => {
+                        let data = e.target.result;
+                        if(!data) return res();
+                        Object.assign(data, modifications);
+                        store.put(data).onsuccess = () => res();
+                    };
+                });
+            },
+            async remove(id) {
+                return new Promise((res,rej) => {
+                    this.db.transaction(["recordings"], "readwrite").objectStore("recordings").delete(id).onsuccess = () => res();
+                });
+            },
+            async clearAll() {
+                return new Promise((res,rej) => {
+                    this.db.transaction(["recordings"], "readwrite").objectStore("recordings").clear().onsuccess = () => res();
+                });
+            }
+        };
+
+        /* -------------------------------------------------------------
+           DATA STATE MODELS & FOLDERS 
+           ------------------------------------------------------------- */
+        const AppData = {
+            recordings: [],
+            folders: JSON.parse(localStorage.getItem('vrp_folders')) || ['Personal', 'Work', 'Ideas'],
+            
+            async load() { this.recordings = await DB.getAll(); },
+            
+            saveFolders() { localStorage.setItem('vrp_folders', JSON.stringify(this.folders)); },
+            
+            getSearch(query) { return this.recordings.filter(r => r.name.toLowerCase().includes(query.toLowerCase())); },
+            
+            getFavs() { return this.recordings.filter(r => r.isFav); },
+            
+            getFolderList(fName) { return this.recordings.filter(r => r.folder === fName); },
+
+            generateFileName() {
+                const date = new Date();
+                const dts = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}_${date.getHours().toString().padStart(2,'0')}${date.getMinutes().toString().padStart(2,'0')}${date.getSeconds().toString().padStart(2,'0')}`;
+                return `Record_${dts}`;
+            }
+        };
+
+        const Folders = {
+            create() {
+                let name = $('inp-folder-name').value.trim();
+                if(!name || AppData.folders.includes(name)) return Toast.show("Invalid or duplicate folder");
+                AppData.folders.push(name);
+                AppData.saveFolders();
+                Modals.hide(); Toast.show("Folder Created"); UI.renderFolders();
+            },
+            delete(fName) {
+                if(confirm("Delete folder? Recordings stay in base directory.")) {
+                    AppData.folders = AppData.folders.filter(f => f !== fName);
+                    AppData.recordings.forEach(r => { if(r.folder===fName) { r.folder='Base'; DB.update(r.id, {folder:'Base'}); }});
+                    AppData.saveFolders(); Toast.show("Folder Deleted"); UI.renderFolders();
+                }
+            },
+            populateMoveSelect() {
+                let sel = $('sel-move-folder'); sel.innerHTML = `<option value="">Base Directory</option>` + AppData.folders.map(f => `<option value="${f}">${f}</option>`).join('');
+            }
+        };
+
+        /* -------------------------------------------------------------
+           RECORDING ENGINE (Foreground/Audio Processing via Web APIs)
+           ------------------------------------------------------------- */
+        const Engine = {
+            stream: null,
+            mediaRecorder: null,
+            audioChunks: [],
+            isRecording: false,
+            isPaused: false,
+            timer: null,
+            secondsObj: 0,
+            wakeLock: null,
+            
+            // Audio Context / Visualizer state
+            audioCtx: null, analyser: null, source: null, vizFrameId: null,
+
+            async requestPerm() {
+                if(!this.stream) {
+                    try {
+                        // Added safety check for missing mediaDevices (e.g. non-HTTPS or unsupported browsers)
+                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                            throw new Error("Audio recording is not supported in this browser.");
+                        }
+                        this.stream = await navigator.mediaDevices.getUserMedia({audio: true});
+                        Toast.show("Microphone Ready");
+                    } catch (e) {
+                        Toast.show("Permission Denied/Error: " + e.message); throw e;
+                    }
+                }
+            },
+            
+            async initWakeLock() {
+                if ('wakeLock' in navigator) {
+                    try { this.wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+                }
+            },
+            releaseWakeLock() { if(this.wakeLock) this.wakeLock.release().then(()=>{this.wakeLock=null;}); },
+
+            startVisualizer() {
+                const canvas = $('visualizer'); if(!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if(!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if(!this.analyser) {
+                    this.analyser = this.audioCtx.createAnalyser();
+                    this.analyser.fftSize = 256;
+                    this.source = this.audioCtx.createMediaStreamSource(this.stream);
+                    this.source.connect(this.analyser);
+                }
+                const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                
+                const draw = () => {
+                    if(!this.isRecording) {
+                        ctx.clearRect(0,0, canvas.width, canvas.height); return;
+                    }
+                    this.vizFrameId = requestAnimationFrame(draw);
+                    this.analyser.getByteFrequencyData(dataArray);
+                    
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    let barWidth = (canvas.width / dataArray.length) * 2.5; let barHeight; let x = 0;
+                    
+                    const isDarkMode = document.body.classList.contains('dark-mode');
+                    const color = isDarkMode ? '#D0BCFF' : '#4B00B4';
+
+                    for(let i = 0; i < dataArray.length; i++) {
+                        barHeight = dataArray[i] / 2;
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 1;
+                    }
+                }; draw();
+            },
+
+            async toggleRecord() {
+                if(this.isRecording && !this.isPaused) {
+                    // Current running, we DO NOT STOP on tap main. It just flashes red. 
+                    // Stop must happen from STOP btn for explicit UX requirement.
+                    return;
+                }
+                
+                if(!this.isRecording) {
+                    await this.requestPerm();
+                    this.startInternal();
+                } else if(this.isPaused) {
+                    this.resumeInternal();
+                }
+            },
+            startInternal() {
+                try {
+                    let mimeType = Settings.current.format; 
+                    if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = ""; // Let browser fallback
+                    
+                    const bitsPS = parseInt(Settings.current.quality);
+
+                    this.mediaRecorder = new MediaRecorder(this.stream, {mimeType: mimeType, audioBitsPerSecond: bitsPS});
+                    this.audioChunks = [];
+                    
+                    this.mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) this.audioChunks.push(e.data); };
+                    this.mediaRecorder.onstop = this.processResult.bind(this);
+                    
+                    this.mediaRecorder.start(100); // 100ms chunking avoids memory loss if app crashes
+                    this.isRecording = true; this.isPaused = false;
+                    
+                    this.startVisualizer(); this.initWakeLock();
+                    
+                    // UI changes
+                    $('btn-record-main').classList.add('active');
+                    $('rec-icon').outerHTML = `<svg viewBox="0 0 24 24" id="rec-icon" class="icon-lg"><path d="M6 6h12v12H6z"/></svg>`;
+                    $('rec-status-txt').innerText = "Recording in Progress...";
+                    $('rec-dot').className = "dot recording-dot";
+                    $('mic-wave').style.width = '160px'; $('mic-wave').style.height = '160px';
+                    $('rec-ctrls').classList.remove('hidden');
+
+                    this.secondsObj = 0;
+                    $('rec-timer').innerText = "00:00:00";
+                    this.timer = setInterval(() => { 
+                        this.secondsObj++; $('rec-timer').innerText = formatTime(this.secondsObj); 
+                        $('mic-wave').style.transform = `translate(-50%, -50%) scale(${1 + (Math.random()*0.3)})`;
+                    }, 1000);
+
+                    // PWA Local Notification sim (Fixed Notification check)
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification("Voice Recorder", {body: "Recording Started"});
+                    }
+                } catch (e) {
+                    Toast.show("Audio format issue. Adjust Settings.");
+                }
+            },
+            pauseRecord() {
+                if(!this.isRecording || this.isPaused) { this.toggleRecord(); return; } // Resume shortcut
+                this.mediaRecorder.pause();
+                this.isPaused = true;
+                clearInterval(this.timer);
+                $('rec-status-txt').innerText = "Recording Paused";
+                $('rec-dot').className = "dot";
+                $('pause-icon').outerHTML = `<svg viewBox="0 0 24 24" id="pause-icon"><path d="M8 5v14l11-7z"/></svg>`; // Make play icon
+                $('mic-wave').style.width = '0px'; $('mic-wave').style.height = '0px';
+            },
+            resumeInternal() {
+                this.mediaRecorder.resume();
+                this.isPaused = false;
+                $('rec-status-txt').innerText = "Recording in Progress...";
+                $('rec-dot').className = "dot recording-dot";
+                $('pause-icon').outerHTML = `<svg viewBox="0 0 24 24" id="pause-icon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+                this.timer = setInterval(() => { 
+                    this.secondsObj++; $('rec-timer').innerText = formatTime(this.secondsObj);
+                }, 1000);
+            },
+            stopRecord() {
+                if(!this.isRecording) return;
+                this.mediaRecorder.stop();
+                clearInterval(this.timer);
+                this.isRecording = false; this.isPaused = false;
+                if(this.vizFrameId) cancelAnimationFrame(this.vizFrameId);
+                this.releaseWakeLock();
+
+                // UI Restore
+                $('btn-record-main').classList.remove('active');
+                $('rec-icon').outerHTML = `<svg viewBox="0 0 24 24" id="rec-icon" class="icon-lg"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6.5 6.92V21h1v-3.08A7 7 0 0 0 19 11h-2z"/></svg>`;
+                $('rec-status-txt').innerText = "Ready to record";
+                $('rec-dot').className = "dot";
+                $('rec-timer').innerText = "00:00:00";
+                $('rec-ctrls').classList.add('hidden');
+                $('mic-wave').style.width = '0px'; $('mic-wave').style.height = '0px';
+                $('pause-icon').outerHTML = `<svg viewBox="0 0 24 24" id="pause-icon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+
+                const cv = $('visualizer'); if(cv) cv.getContext('2d').clearRect(0,0, cv.width, cv.height);
+            },
+            async processResult() {
+                const formatLabel = Settings.current.format === 'audio/mp4' ? 'mp4' : 'webm';
+                let blob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType || 'audio/webm' });
+                
+                // Safety handle very short useless clips
+                if(this.secondsObj < 1 && blob.size < 5000) { Toast.show("Recording too short"); return; }
+                
+                const recData = {
+                    name: AppData.generateFileName(),
+                    size: blob.size,
+                    duration: this.secondsObj,
+                    format: formatLabel,
+                    timestamp: Date.now(),
+                    isFav: false,
+                    folder: null,
+                    audioBlob: blob
+                };
+                try {
+                    await DB.insert(recData); Toast.show("Saved successfully!");
+                    await AppData.load(); // Refresh DB
+                    UI.updateCountHome();
+                    if(Settings.current.format==='audio/mp4') Toast.show("Note: Browsers might default save WebM.");
+                } catch(e) { Toast.show("Failed to save audio file"); }
+            }
+        };
+
+        /* -------------------------------------------------------------
+           AUDIO PLAYER ENGINE (Plays saved blobs)
+           ------------------------------------------------------------- */
+        const AudioPlayer = {
+            audioEl: new Audio(), currentId: null, isPlaying: false, urlMap: null, uiInterval: null,
+            speedOptions: [0.5, 1, 1.5, 2],
+            speedIdx: 1,
+
+            init() {
+                this.audioEl.onended = () => { this.stopUI(); };
+                const s = $('player-seeker');
+                if(s) {
+                    s.addEventListener('input', () => { 
+                        if(this.audioEl.duration) this.audioEl.currentTime = (s.value / 100) * this.audioEl.duration; 
+                    });
+                }
+            },
+            async loadPlay(id) {
+                const rec = AppData.recordings.find(r => r.id === id); if(!rec) return;
+                this.stop(); // Stop current if any
+                this.currentId = id;
+                this.urlMap = URL.createObjectURL(rec.audioBlob);
+                this.audioEl.src = this.urlMap;
+                this.audioEl.playbackRate = this.speedOptions[this.speedIdx];
+                
+                UI.showPlayer(rec);
+                this.togglePlay();
+            },
+            togglePlay() {
+                if(!this.audioEl.src) return;
+                if(this.audioEl.paused) {
+                    this.audioEl.play().catch(e => Toast.show("Playback Error"));
+                    this.isPlaying = true;
+                    this.uiInterval = setInterval(this.updateUITicker.bind(this), 200);
+                    $('play-icon').outerHTML = `<svg viewBox="0 0 24 24" id="play-icon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`; // Pause shape
+                } else {
+                    this.audioEl.pause(); this.isPlaying = false;
+                    clearInterval(this.uiInterval);
+                    $('play-icon').outerHTML = `<svg viewBox="0 0 24 24" id="play-icon"><path d="M8 5v14l11-7z"/></svg>`; // Play shape
+                }
+            },
+            stop() {
+                if(!this.currentId) return;
+                this.audioEl.pause(); this.audioEl.currentTime = 0; this.stopUI();
+                if(this.urlMap) URL.revokeObjectURL(this.urlMap); this.urlMap = null;
+                UI.hidePlayer();
+            },
+            stopUI() {
+                this.isPlaying = false; clearInterval(this.uiInterval);
+                let p = $('play-icon'); if(p) p.outerHTML = `<svg viewBox="0 0 24 24" id="play-icon"><path d="M8 5v14l11-7z"/></svg>`;
+                let s = $('player-seeker'); if(s) s.value = 0;
+            },
+            skip(amount) {
+                if(!this.audioEl.src) return;
+                this.audioEl.currentTime += amount;
+            },
+            cycleSpeed() {
+                this.speedIdx = (this.speedIdx + 1) % this.speedOptions.length;
+                let val = this.speedOptions[this.speedIdx];
+                this.audioEl.playbackRate = val;
+                $('btn-speed').innerText = val + "x";
+                $('player-speed-text').innerText = "Speed: " + val + "x";
+            },
+            updateUITicker() {
+                if(!this.audioEl.duration) return;
+                const percent = (this.audioEl.currentTime / this.audioEl.duration) * 100;
+                $('player-seeker').value = percent;
+                $('player-time-curr').innerText = formatTime(this.audioEl.currentTime);
+                $('player-time-total').innerText = formatTime(this.audioEl.duration);
+            }
+        };
+
+        /* -------------------------------------------------------------
+           UI MANAGER (Routing, Screen Rendering, Action Handling)
+           ------------------------------------------------------------- */
+        const UI = {
+            currentTab: 'home',
+
+            navigate(tab) {
+                if (this.currentTab === tab) return;
+                this.currentTab = tab;
+                // Switch Nav active
+                document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+                document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+
+                // Compile Screen Template into Main content
+                let content = $('main-content');
+                let tpl = $(`tpl-${tab}`).content.cloneNode(true);
+                content.innerHTML = ''; content.appendChild(tpl);
+
+                // Set App bar titles & Initializer runs
+                if(tab === 'home') { $('top-title').innerText = 'Record'; StorageStats.runQuickText(); this.updateCountHome(); Engine.startVisualizer();}
+                if(tab === 'list') { $('top-title').innerText = 'All Recordings'; this.renderList(); }
+                if(tab === 'favorites') { $('top-title').innerText = 'Favorites'; this.renderFavorites(); }
+                if(tab === 'folders') { $('top-title').innerText = 'Folders'; this.renderFolders(); }
+                if(tab === 'settings') { $('top-title').innerText = 'Settings'; Settings.fillScreen(); }
+                window.scrollTo(0,0);
+            },
+
+            showPlayer(rec) {
+                $('player-sheet').classList.add('visible');
+                $('player-title').innerText = rec.name;
+                $('player-time-curr').innerText = "00:00";
+                $('player-time-total').innerText = formatTime(rec.duration);
+            },
+            hidePlayer() { $('player-sheet').classList.remove('visible'); },
+
+            updateCountHome() { let el = $('stat-count'); if(el) el.innerText = AppData.recordings.length; },
+
+            renderList(query = '') {
+                const area = $('recording-list-area'); if(!area) return;
+                let data = query ? AppData.getSearch(query) : AppData.recordings;
+                area.innerHTML = data.length === 0 ? `<div class="text-center" style="padding:40px; color:var(--text-secondary);">No recordings found.</div>` : data.map(r => this.cardHTML(r)).join('');
+            },
+
+            renderFavorites() {
+                const area = $('favorites-list-area'); if(!area) return;
+                let data = AppData.getFavs();
+                area.innerHTML = data.length === 0 ? `<div class="text-center" style="padding:40px; color:var(--text-secondary);">No favorites saved yet.</div>` : data.map(r => this.cardHTML(r)).join('');
+            },
+
+            renderFolders() {
+                const fg = $('folders-grid'); if(!fg) return;
+                fg.innerHTML = AppData.folders.map(f => `
+                    <div class="folder-card" onclick="UI.showFolderContents('${f}')">
+                        <svg class="folder-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                        <div style="font-weight: 500; text-overflow:ellipsis; overflow:hidden">${f}</div>
+                        <div style="font-size:12px; color:var(--text-secondary)">${AppData.getFolderList(f).length} items</div>
+                        ${f !== 'Personal' && f !== 'Work' ? `<div style="color:var(--error);font-size:12px;margin-top:8px;" onclick="event.stopPropagation(); Folders.delete('${f}')">Delete</div>` : ''}
+                    </div>
+                `).join('');
+            },
+            showFolderContents(f) {
+                // simple quick nav simulation back to List
+                this.navigate('list');
+                const area = $('recording-list-area'); 
+                if(area) area.innerHTML = `<h3 style="margin-bottom:12px;">Folder: ${f}</h3>` + AppData.getFolderList(f).map(r => this.cardHTML(r)).join('');
+                $('search-input').placeholder = `Search in ${f}...`;
+                $('search-input').oninput = (e) => { area.innerHTML = `<h3 style="margin-bottom:12px;">Folder: ${f}</h3>` + AppData.getFolderList(f).filter(r=>r.name.toLowerCase().includes(e.target.value.toLowerCase())).map(x=>this.cardHTML(x)).join('');};
+            },
+
+            cardHTML(r) {
+                let d = new Date(r.timestamp);
+                let dateStr = d.toLocaleDateString() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
+                let favFill = r.isFav ? 'var(--record-red)' : 'transparent';
+                let favStrk = r.isFav ? 'var(--record-red)' : 'currentColor';
+                return `
+                <div class="recording-card" id="card-${r.id}">
+                    <button class="flex-center" style="background:var(--primary);color:white;width:40px;height:40px;border-radius:50%; flex-shrink:0" onclick="AudioPlayer.loadPlay(${r.id})">
+                        <svg viewBox="0 0 24 24" style="width:20px;"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    <div class="recording-details">
+                        <div class="recording-title" onclick="App.rename(${r.id}, '${r.name}')" title="Tap to rename">${r.name}</div>
+                        <div class="recording-meta">
+                            <span>${dateStr}</span> | <span>${formatTime(r.duration)}</span> | <span>${bytesToSize(r.size)}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="icon-btn" onclick="App.toggleFav(${r.id})" title="Favorite">
+                            <svg viewBox="0 0 24 24" stroke="${favStrk}" fill="${favFill}" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        </button>
+                        <button class="icon-btn" onclick="App.triggerOptions(${r.id})" title="Options">
+                            <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                        </button>
+                    </div>
+                </div>`;
+            }
+        };
+
+        /* -------------------------------------------------------------
+           SYSTEM SETTINGS & STORAGE MANAGEMENT
+           ------------------------------------------------------------- */
+        const Settings = {
+            current: JSON.parse(localStorage.getItem('vrp_settings')) || { theme: 'system', format: 'audio/webm', quality: '128000', bgPlay: true },
+            update(key, val) { this.current[key] = val; this.save(); Toast.show("Setting updated"); },
+            save() { localStorage.setItem('vrp_settings', JSON.stringify(this.current)); },
+            fillScreen() {
+                $('cfg-format').value = this.current.format;
+                $('cfg-quality').value = this.current.quality;
+                $('cfg-theme').value = this.current.theme;
+                let bgTog = $('toggle-bg');
+                if(!this.current.bgPlay) bgTog.classList.remove('on');
+                bgTog.onclick = () => { bgTog.classList.toggle('on'); this.update('bgPlay', bgTog.classList.contains('on')); };
+            },
+            applyThemeInitial() { this.setTheme(this.current.theme, false); },
+            setTheme(mode, u = true) {
+                if(u) { this.current.theme = mode; this.save(); }
+                let useDark = (mode === 'dark') || (mode==='system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if(useDark) document.body.classList.add('dark-mode'); else document.body.classList.remove('dark-mode');
+                // Adjust StatusBar PWA tint meta tag if needed conceptually
+            }
+        };
+
+        const StorageStats = {
+            async update() {
+                if(navigator.storage && navigator.storage.estimate) {
+                    let st = await navigator.storage.estimate();
+                    $('st-used').innerText = bytesToSize(st.usage);
+                    $('st-total').innerText = bytesToSize(st.quota);
+                    let perc = (st.usage / st.quota)*100;
+                    $('st-bar').style.width = perc > 100 ? '100%' : perc+'%';
+                } else {
+                    $('st-total').innerText = "Device Data";
+                }
+            },
+            async runQuickText() {
+                if(navigator.storage && navigator.storage.estimate) {
+                    let st = await navigator.storage.estimate();
+                    let e = $('storage-txt'); if(e) e.innerText = `${bytesToSize(st.quota - st.usage)} Free Space Available`;
+                }
+            }
+        }
+
+        /* -------------------------------------------------------------
+           CORE APP CONTROLLER (Connects UI -> Engine -> DB)
+           ------------------------------------------------------------- */
+        const App = {
+            async bootstrap() {
+                // Show splash artificially to "init modules" & load large data safely.
+                setTimeout(()=>{$('splash-screen').style.opacity = 0; setTimeout(()=>$('splash-screen').remove(),500);}, 2000);
+                
+                try {
+                    await DB.init(); await AppData.load();
+                    AudioPlayer.init();
+                    Settings.applyThemeInitial();
+                    
+                    // FIXED: Added check for 'Notification' API before using it to prevent ReferenceError
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission();
+                    }
+
+                    $('app').classList.remove('hidden');
+                    UI.navigate('home');
+
+                } catch(e) { alert("Initialization Error: " + e.message); }
+            },
+
+            async rename(id, oldName) {
+                let nm = prompt("Enter new recording name:", oldName);
+                if(nm && nm.trim()!="") { await DB.update(id, {name: nm.trim()}); await AppData.load(); UI.renderList($('search-input')?.value || ""); }
+            },
+            async toggleFav(id) {
+                let rec = AppData.recordings.find(r=>r.id===id); if(!rec) return;
+                await DB.update(id, {isFav: !rec.isFav}); await AppData.load();
+                if(UI.currentTab === 'list') UI.renderList();
+                if(UI.currentTab === 'favorites') UI.renderFavorites();
+            },
+            triggerOptions(id) {
+                let act = prompt("Actions:\n1 = Share\n2 = Move to Folder\n3 = Duplicate\n4 = Delete\nType number:");
+                if(act==='1') this.shareRecording(id);
+                if(act==='2') Modals.show('modal-move-folder', id);
+                if(act==='3') this.duplicateRecording(id);
+                if(act==='4') this.deleteRecording(id);
+            },
+            async moveActiveRecording() {
+                let fn = $('sel-move-folder').value || null; let id = Modals.currentMoveId;
+                await DB.update(id, {folder: fn}); await AppData.load();
+                Modals.hide(); Toast.show(fn ? "Moved to "+fn : "Moved to base directory");
+                if(UI.currentTab === 'list') UI.renderList();
+            },
+            async shareRecording(id) {
+                let rec = AppData.recordings.find(r=>r.id===id); if(!rec) return;
+                let ext = rec.format === 'mp4' ? '.m4a' : '.webm';
+                let file = new File([rec.audioBlob], rec.name + ext, { type: rec.audioBlob.type });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({ title: rec.name, files: [file] }).catch(console.error);
+                } else { Toast.show("File sharing not supported in your browser."); }
+            },
+            async duplicateRecording(id) {
+                let rec = AppData.recordings.find(r=>r.id===id); if(!rec) return;
+                let clone = { ...rec }; delete clone.id; clone.name = clone.name + "_copy"; clone.timestamp = Date.now();
+                await DB.insert(clone); await AppData.load(); UI.renderList(); Toast.show("Recording duplicated");
+            },
+            async deleteRecording(id) {
+                if(confirm("Are you sure you want to delete this recording?")) {
+                    if(AudioPlayer.currentId === id) AudioPlayer.stop();
+                    await DB.remove(id); await AppData.load();
+                    if(UI.currentTab === 'list') UI.renderList();
+                    if(UI.currentTab === 'favorites') UI.renderFavorites();
+                    Toast.show("Recording deleted");
+                }
+            },
+            async clearCache() {
+                if(confirm("Warning! This deletes ALL recordings and resets App. Continue?")) {
+                    await DB.clearAll(); localStorage.clear();
+                    alert("App completely reset. Please restart."); window.location.reload();
+                }
+            }
+        };
+
+        // Execute Bootstrap System Lifecycle Entry
+        window.addEventListener('load', () => App.bootstrap());
+    </script>
+</body>
+  </html>
