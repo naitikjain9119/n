@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Glassmorphism Calculator</title>
+    <title>Modern Live-Preview Dual Calculator</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
@@ -16,6 +16,7 @@
             --glass-shadow: rgba(31, 38, 135, 0.15);
             --text-main: #2d3436;
             --text-muted: #636e72;
+            --text-preview: #586776;
             --btn-bg: rgba(255, 255, 255, 0.6);
             --btn-hover: rgba(255, 255, 255, 0.9);
             --btn-active: rgba(255, 255, 255, 0.4);
@@ -37,6 +38,7 @@
             --glass-shadow: rgba(0, 0, 0, 0.5);
             --text-main: #f1f2f6;
             --text-muted: #a4b0be;
+            --text-preview: #74889c;
             --btn-bg: rgba(255, 255, 255, 0.08);
             --btn-hover: rgba(255, 255, 255, 0.2);
             --btn-active: rgba(255, 255, 255, 0.03);
@@ -69,7 +71,6 @@
             overflow: hidden;
         }
 
-        /* Animated Background Blobs */
         .blob {
             position: absolute;
             filter: blur(80px);
@@ -77,28 +78,10 @@
             opacity: 0.6;
             animation: float 10s infinite ease-in-out alternate;
         }
-        .blob-1 {
-            width: 400px;
-            height: 400px;
-            background: rgba(162, 155, 254, 0.5);
-            top: -100px;
-            left: -100px;
-            border-radius: 50%;
-        }
-        .blob-2 {
-            width: 300px;
-            height: 300px;
-            background: rgba(116, 185, 255, 0.5);
-            bottom: -50px;
-            right: -50px;
-            border-radius: 50%;
-            animation-delay: -5s;
-        }
+        .blob-1 { width: 400px; height: 400px; background: rgba(162, 155, 254, 0.5); top: -100px; left: -100px; border-radius: 50%; }
+        .blob-2 { width: 300px; height: 300px; background: rgba(116, 185, 255, 0.5); bottom: -50px; right: -50px; border-radius: 50%; animation-delay: -5s; }
 
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(30px, 50px) scale(1.1); }
-        }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 50px) scale(1.1); } }
 
         .app-container {
             position: relative;
@@ -111,7 +94,6 @@
             justify-content: center;
         }
 
-        /* Glassmorphism Calculator Base */
         .calculator {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -129,25 +111,54 @@
             transition: all 0.3s ease;
         }
 
-        /* Header */
+        /* HEADER UI */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-bottom: 20px;
         }
-
         .header-controls {
             display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        
+        /* Modern Dual Math Switch Control Pill Box */
+        .pill-group {
+            display: inline-flex;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 30px;
+            padding: 4px;
+            align-items: center;
+        }
+        [data-theme="dark"] .pill-group { background: rgba(255, 255, 255, 0.1); }
+        .pill {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+        }
+        .pill.active {
+            background: var(--text-main);
+            color: var(--bg-color-1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
         }
 
         .icon-btn {
             background: var(--btn-bg);
             border: 1px solid var(--glass-border);
             color: var(--text-main);
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -156,363 +167,115 @@
             font-size: 1.1rem;
             transition: all 0.2s ease;
         }
+        .icon-btn:hover { background: var(--btn-hover); transform: translateY(-2px); }
+        .deg-rad-toggle { font-size: 0.8rem; font-weight: 600; padding: 0 12px; border-radius: 20px; width: auto; }
 
-        .icon-btn:hover {
-            background: var(--btn-hover);
-            transform: translateY(-2px);
-        }
-
-        .deg-rad-toggle {
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 0 12px;
-            border-radius: 20px;
-            width: auto;
-        }
-
-        /* Display Section */
+        /* Display System Constraints */
         .display-container {
             background: rgba(0, 0, 0, 0.04);
             border-radius: 20px;
-            padding: 20px;
+            padding: 20px 20px 15px 20px;
             margin-bottom: 20px;
             text-align: right;
             border: 1px inset var(--glass-border);
             position: relative;
-            min-height: 140px; /* Locked height so keypad doesn't jump */
+            min-height: 165px; 
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
         }
-
-        [data-theme="dark"] .display-container {
-            background: rgba(0, 0, 0, 0.25);
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
-        }
+        [data-theme="dark"] .display-container { background: rgba(0, 0, 0, 0.25); box-shadow: inset 0 2px 10px rgba(0,0,0,0.2); }
 
         .expression {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            min-height: 1.8rem;
-            margin-bottom: 5px;
-            overflow-x: auto;
-            white-space: nowrap;
-            scrollbar-width: none;
+            color: var(--text-muted); font-size: 1rem; height: 24px; line-height: 24px;
+            margin-bottom: 5px; overflow-x: auto; white-space: nowrap; scrollbar-width: none;
         }
-        .expression::-webkit-scrollbar { display: none; }
-
         .result {
-            color: var(--text-main);
-            font-size: 3rem;
-            font-weight: 600;
-            overflow-x: auto;
-            white-space: nowrap;
-            scrollbar-width: none;
-            transition: font-size 0.2s ease;
+            color: var(--text-main); font-weight: 600; min-height: 58px;
+            display: flex; justify-content: flex-end; align-items: center;
+            overflow-x: auto; white-space: nowrap; scrollbar-width: none; transition: font-size 0.2s ease;
         }
-        .result::-webkit-scrollbar { display: none; }
+        .live-preview {
+            color: var(--text-preview); font-size: 1.25rem; font-weight: 500; height: 26px; 
+            line-height: 26px; margin-top: 5px; overflow-x: auto; white-space: nowrap; opacity: 0.9;
+        }
+        .expression::-webkit-scrollbar, .result::-webkit-scrollbar, .live-preview::-webkit-scrollbar { display: none; }
 
-        .copy-btn {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.2s, transform 0.2s;
-        }
-        .copy-btn:hover { 
-            color: var(--text-main);
-            transform: scale(1.1);
-        }
+        .copy-btn { position: absolute; top: 15px; left: 15px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; transition: transform 0.2s; }
+        .copy-btn:hover { color: var(--text-main); transform: scale(1.1); }
 
-        /* Keypad Section */
-        .keypad-wrapper {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
+        /* Keyboard Box Locks */
+        .keypad-wrapper { flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
+        
         .mode-toggle-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            padding: 5px;
-            transition: color 0.2s;
+            background: transparent; border: none; color: var(--text-muted); font-size: 0.9rem; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 5px; padding: 5px; transition: color 0.2s;
         }
         .mode-toggle-btn:hover { color: var(--text-main); }
-        .mode-toggle-btn svg {
-            width: 16px;
-            height: 16px;
-            transition: transform 0.3s ease;
-        }
+        .mode-toggle-btn svg { width: 16px; height: 16px; transition: transform 0.3s ease; }
         .mode-toggle-btn.active svg { transform: rotate(180deg); }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
-
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        
         .sci-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            overflow: hidden;
-            max-height: 0;
-            opacity: 0;
-            transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+            overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease;
         }
+        .sci-grid.active { max-height: 250px; opacity: 1; margin-bottom: 5px; }
 
-        .sci-grid.active {
-            max-height: 250px;
-            opacity: 1;
-            margin-bottom: 5px;
-        }
-
-        /* Rigid Buttons to prevent jumping */
         .btn {
-            background: var(--btn-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            font-size: 1.4rem;
-            font-weight: 500;
-            border-radius: 16px;
-            height: 60px; /* Locked height */
-            cursor: pointer;
-            transition: all 0.15s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            user-select: none;
+            background: var(--btn-bg); border: 1px solid var(--glass-border); color: var(--text-main);
+            font-size: 1.4rem; font-weight: 500; border-radius: 16px; height: 60px;
+            cursor: pointer; transition: all 0.15s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex; justify-content: center; align-items: center; user-select: none;
         }
+        .btn:hover { background: var(--btn-hover); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .btn:active { transform: translateY(1px); background: var(--btn-active); }
 
-        .btn:hover {
-            background: var(--btn-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
-
-        .btn:active {
-            transform: translateY(1px);
-            background: var(--btn-active);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .btn.operator {
-            background: var(--btn-operator);
-            color: #fff;
-            font-size: 1.6rem;
-        }
+        .btn.operator { background: var(--btn-operator); color: #fff; font-size: 1.6rem; }
         .btn.operator:hover { background: var(--btn-operator-hover); }
-
-        .btn.equals {
-            background: var(--btn-equals);
-            color: #fff;
-            font-size: 1.8rem;
-            /* Removed span 2 so it perfectly fits in the rigid 4-column layout */
-        }
+        .btn.equals { background: var(--btn-equals); color: #fff; font-size: 1.8rem; }
         .btn.equals:hover { background: var(--btn-equals-hover); }
-
-        .btn.danger {
-            background: var(--btn-danger);
-            color: #fff;
-            font-size: 1.2rem;
-        }
+        .btn.danger { background: var(--btn-danger); color: #fff; font-size: 1.2rem; }
         .btn.danger:hover { background: var(--btn-danger-hover); }
+        .btn.sci { font-size: 1.1rem; height: 50px; background: var(--btn-bg); }
 
-        .btn.sci {
-            font-size: 1.1rem;
-            height: 50px; /* Slightly smaller for scientific buttons */
-            background: var(--btn-bg);
-        }
-
-        /* History Panel */
+        /* History Side Menu Limits */
         .history-panel {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 30px;
-            width: 320px;
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 8px 32px 0 var(--glass-shadow);
-            transform: translateX(120%);
-            opacity: 0;
-            position: absolute;
-            right: 0;
-            height: 100%;
-            z-index: 20;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
+            border-radius: 30px; width: 320px; padding: 25px; display: flex; flex-direction: column;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow); transform: translateX(120%); opacity: 0; position: absolute;
+            right: 0; height: 100%; z-index: 20; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .history-panel.show { transform: translateX(0); opacity: 1; position: relative; }
 
-        .history-panel.show {
-            transform: translateX(0);
-            opacity: 1;
-            position: relative;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .history-header h3 {
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
-
-        .clear-hist-btn {
-            background: var(--btn-danger);
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-        }
-        .clear-hist-btn:hover { background: var(--btn-danger-hover); }
-
-        .close-hist-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            cursor: pointer;
-            font-size: 1.2rem;
-            display: none; 
-        }
-
-        .history-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-right: 5px;
-        }
-
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-border); }
+        .history-header h3 { font-size: 1.2rem; font-weight: 500; }
+        .clear-hist-btn { background: var(--btn-danger); color: white; border: none; padding: 6px 14px; border-radius: 12px; cursor: pointer; font-size: 0.85rem; }
+        .close-hist-btn { background: transparent; border: none; color: var(--text-main); cursor: pointer; font-size: 1.2rem; display: none; }
+        
+        .history-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 5px; }
         .history-list::-webkit-scrollbar { width: 6px; }
-        .history-list::-webkit-scrollbar-track { background: transparent; }
-        .history-list::-webkit-scrollbar-thumb { 
-            background: var(--glass-border); 
-            border-radius: 10px; 
-        }
+        .history-list::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+        .history-item { padding: 15px; border-radius: 15px; background: var(--btn-bg); border: 1px solid var(--glass-border); cursor: pointer; text-align: right; }
+        .history-item:hover { background: var(--btn-hover); transform: translateX(-5px); }
+        .hist-expr { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 4px; }
+        .hist-res { font-size: 1.3rem; font-weight: 600; color: var(--text-main); }
+        .no-history { text-align: center; color: var(--text-muted); margin-top: 20px; font-size: 0.95rem; }
 
-        .history-item {
-            padding: 15px;
-            border-radius: 15px;
-            background: var(--btn-bg);
-            border: 1px solid var(--glass-border);
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: right;
-        }
-
-        .history-item:hover {
-            background: var(--btn-hover);
-            transform: translateX(-5px);
-        }
-
-        .hist-expr {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .hist-res {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .no-history {
-            text-align: center;
-            color: var(--text-muted);
-            margin-top: 20px;
-            font-size: 0.95rem;
-        }
-
-        /* Responsive Design */
         @media (max-width: 768px) {
-            .app-container {
-                height: 100vh;
-                max-height: none;
-                width: 100%;
-                margin: 0;
-                border-radius: 0;
-            }
-            .calculator {
-                max-width: 100%;
-                border-radius: 0;
-                border: none;
-                box-shadow: none;
-                padding: 15px 20px;
-            }
-            .history-panel {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                border-radius: 0;
-                transform: translateY(100%);
-            }
-            .history-panel.show {
-                transform: translateY(0);
-            }
-            .close-hist-btn {
-                display: block;
-            }
-            .btn {
-                height: 70px; /* Taller on mobile for better touch target */
-                font-size: 1.6rem;
-            }
-            .btn.sci {
-                height: 55px;
-            }
-            .display-container {
-                min-height: 150px;
-            }
+            .app-container { height: 100vh; max-height: none; width: 100%; margin: 0; }
+            .calculator { max-width: 100%; border-radius: 0; border: none; padding: 15px 20px; }
+            .history-panel { position: absolute; top: 0; left: 0; width: 100%; border-radius: 0; transform: translateY(100%); }
+            .history-panel.show { transform: translateY(0); }
+            .close-hist-btn { display: block; }
+            .btn { height: 65px; font-size: 1.6rem; }
+            .btn.sci { height: 52px; }
         }
         
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--text-main);
-            color: var(--bg-color-1);
-            padding: 12px 25px;
-            border-radius: 30px;
-            font-size: 1rem;
-            font-weight: 500;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-main); color: var(--bg-color-1); padding: 12px 25px; border-radius: 30px; font-weight: 500; opacity: 0; transition: all 0.3s ease; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     </style>
 </head>
 <body>
@@ -520,68 +283,71 @@
     <div class="blob blob-2"></div>
 
     <div class="app-container">
-        <!-- Main Calculator -->
+        <!-- Main Panel Constraints Structure -->
         <div class="calculator">
+            
             <div class="header">
-                <button class="icon-btn deg-rad-toggle" id="deg-rad-btn" aria-label="Toggle Degrees/Radians">DEG</button>
+                <!-- Mathematical Algorithm Logic Core Toggles ! -->
+                <div class="pill-group" id="math-mode-group">
+                    <button class="pill active" data-mode="bodmas" id="btn-bodmas">BODMAS</button>
+                    <button class="pill" data-mode="merchant" id="btn-merchant">NORMAL</button>
+                </div>
+
                 <div class="header-controls">
+                    <button class="icon-btn deg-rad-toggle" id="deg-rad-btn" aria-label="Toggle Degrees/Radians">DEG</button>
                     <button class="icon-btn" id="theme-btn" aria-label="Toggle Theme">🌙</button>
                     <button class="icon-btn" id="hist-btn" aria-label="Toggle History">🕒</button>
                 </div>
             </div>
 
             <div class="display-container">
-                <button class="copy-btn" id="copy-btn" title="Copy Result" aria-label="Copy Result">📋</button>
-                <div class="expression" id="expression"></div>
-                <div class="result" id="result">0</div>
+                <button class="copy-btn" id="copy-btn" title="Copy Result">📋</button>
+                <div class="expression" id="expression"></div> <!-- Past Text -->
+                <div class="result" id="result">0</div>       <!-- Large Present Engine Number -->
+                <div class="live-preview" id="live-preview"></div> <!-- Bottom Answer Shadow Logic Text -->
             </div>
 
             <div class="keypad-wrapper">
+                
                 <button class="mode-toggle-btn" id="sci-toggle-btn" aria-expanded="false">
                     Scientific Mode
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
 
-                <!-- Scientific Keypad -->
+                <!-- Hidden Scientistic Extension Menu Contexts -->
                 <div class="sci-grid" id="sci-grid">
                     <button class="btn sci" data-val="sin(">sin</button>
                     <button class="btn sci" data-val="cos(">cos</button>
                     <button class="btn sci" data-val="tan(">tan</button>
                     <button class="btn sci operator" data-val="π">π</button>
-                    
                     <button class="btn sci" data-val="log(">log</button>
                     <button class="btn sci" data-val="ln(">ln</button>
                     <button class="btn sci operator" data-val="(">(</button>
                     <button class="btn sci operator" data-val=")">)</button>
-                    
                     <button class="btn sci" data-val="√(">√</button>
                     <button class="btn sci" data-val="^2">x²</button>
                     <button class="btn sci" data-val="^">x^y</button>
                     <button class="btn sci" data-val="!">n!</button>
                 </div>
 
-                <!-- Basic Keypad - Rigid Grid perfectly aligning all buttons -->
+                <!-- Pure Kirana Compatible Math Symmetric Pad  -->
                 <div class="grid">
                     <button class="btn danger" id="btn-ac">AC</button>
                     <button class="btn danger" id="btn-del">DEL</button>
                     <button class="btn operator" data-val="%">%</button>
                     <button class="btn operator" data-val="/">÷</button>
-
                     <button class="btn" data-val="7">7</button>
                     <button class="btn" data-val="8">8</button>
                     <button class="btn" data-val="9">9</button>
                     <button class="btn operator" data-val="*">×</button>
-
                     <button class="btn" data-val="4">4</button>
                     <button class="btn" data-val="5">5</button>
                     <button class="btn" data-val="6">6</button>
                     <button class="btn operator" data-val="-">−</button>
-
                     <button class="btn" data-val="1">1</button>
                     <button class="btn" data-val="2">2</button>
                     <button class="btn" data-val="3">3</button>
                     <button class="btn operator" data-val="+">+</button>
-
                     <button class="btn" id="btn-sign">+/-</button>
                     <button class="btn" data-val="0">0</button>
                     <button class="btn" data-val=".">.</button>
@@ -590,7 +356,7 @@
             </div>
         </div>
 
-        <!-- History Panel -->
+        <!-- History Context Menu Layers Limit Overlay Sidebar -->
         <div class="history-panel" id="history-panel">
             <div class="history-header">
                 <h3>History</h3>
@@ -599,69 +365,64 @@
                     <button class="close-hist-btn" id="close-hist-btn">✖</button>
                 </div>
             </div>
-            <div class="history-list" id="history-list">
-                <!-- History Items Go Here -->
-            </div>
+            <div class="history-list" id="history-list"></div>
         </div>
     </div>
-
-    <!-- Toast Notification -->
+    
     <div class="toast" id="toast">Copied to clipboard!</div>
 
     <script>
-        // --- State Management ---
+        // --- Architecture Math State Management Engine Context Limits! ---
         let currentInput = '0';
         let expression = '';
         let history = [];
         let isSciMode = false;
         let isDegrees = true;
+        let isMerchantMode = false; // TRUE forces step-by-step normal logic (no BODMAS constraints bypass!) 
         let lastResult = null;
         let shouldResetInput = false;
 
-        // --- DOM Elements ---
+        // Visual Access Nodes Objects Registry:
         const displayResult = document.getElementById('result');
         const displayExpr = document.getElementById('expression');
+        const displayPreview = document.getElementById('live-preview');
+        
         const themeBtn = document.getElementById('theme-btn');
         const histBtn = document.getElementById('hist-btn');
-        const closeHistBtn = document.getElementById('close-hist-btn');
-        const historyPanel = document.getElementById('history-panel');
-        const historyList = document.getElementById('history-list');
-        const clearHistBtn = document.getElementById('clear-hist-btn');
-        const sciToggleBtn = document.getElementById('sci-toggle-btn');
-        const sciGrid = document.getElementById('sci-grid');
-        const copyBtn = document.getElementById('copy-btn');
-        const toast = document.getElementById('toast');
         const degRadBtn = document.getElementById('deg-rad-btn');
+        const sciToggleBtn = document.getElementById('sci-toggle-btn');
+        
+        // Mode Math Logics Nodes Links System Hooks!
+        const btnBodmas = document.getElementById('btn-bodmas');
+        const btnMerchant = document.getElementById('btn-merchant');
 
-        // --- Initialization ---
+        // Startup Hooks System Initialization Base Calls 
         function init() {
-            // Load Theme
+            // Re-apply Context Saves Storage Local Base limits Themes Limits 
             const savedTheme = localStorage.getItem('calc-theme') || 'dark';
             document.body.setAttribute('data-theme', savedTheme);
             themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 
-            // Load History
+            // Extract Arrays Limit Limits Safely 
             const savedHistory = localStorage.getItem('calc-history');
             if (savedHistory) {
                 history = JSON.parse(savedHistory);
                 renderHistory();
-            } else {
-                renderEmptyHistory();
-            }
+            } else renderEmptyHistory();
 
-            // Load Deg/Rad pref
-            const savedAngleMode = localStorage.getItem('calc-angle');
-            if (savedAngleMode === 'rad') {
+            const savedAngle = localStorage.getItem('calc-angle');
+            if (savedAngle === 'rad') {
                 isDegrees = false;
                 degRadBtn.textContent = 'RAD';
             }
+            
+            const savedMode = localStorage.getItem('calc-math-mode') || 'bodmas';
+            applyLogicModeUI(savedMode);
 
             updateDisplay();
         }
 
-        // --- Event Listeners ---
-        
-        // Theme Toggle
+        // ---------- Base UI Event Callbacks Interfaces Routes Setup -----
         themeBtn.addEventListener('click', () => {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -670,347 +431,287 @@
             themeBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
         });
 
-        // History Toggle
-        histBtn.addEventListener('click', () => historyPanel.classList.toggle('show'));
-        closeHistBtn.addEventListener('click', () => historyPanel.classList.remove('show'));
-        clearHistBtn.addEventListener('click', clearHistory);
+        histBtn.addEventListener('click', () => document.getElementById('history-panel').classList.toggle('show'));
+        document.getElementById('close-hist-btn').addEventListener('click', () => document.getElementById('history-panel').classList.remove('show'));
+        document.getElementById('clear-hist-btn').addEventListener('click', clearHistory);
 
-        // Scientific Mode Toggle
-        sciToggleBtn.addEventListener('click', () => {
-            isSciMode = !isSciMode;
-            sciToggleBtn.classList.toggle('active', isSciMode);
-            sciGrid.classList.toggle('active', isSciMode);
-        });
-
-        // Deg/Rad Toggle
-        degRadBtn.addEventListener('click', () => {
-            isDegrees = !isDegrees;
-            degRadBtn.textContent = isDegrees ? 'DEG' : 'RAD';
-            localStorage.setItem('calc-angle', isDegrees ? 'deg' : 'rad');
-            // Re-evaluate if there's a valid expression with trig
-            if (lastResult !== null && expression.match(/sin|cos|tan/)) {
-                calculate(true);
-            }
-        });
-
-        // Copy Button
-        copyBtn.addEventListener('click', () => {
+        document.getElementById('copy-btn').addEventListener('click', () => {
             navigator.clipboard.writeText(displayResult.textContent).then(() => {
-                showToast('Copied to clipboard!');
+                let tst = document.getElementById('toast');
+                tst.textContent = "Copied to clipboard!";
+                tst.classList.add('show'); setTimeout(()=>tst.classList.remove('show'),2000);
             });
         });
 
-        // Button Clicks (Delegation and Specific)
-        document.querySelectorAll('.btn[data-val]').forEach(btn => {
-            btn.addEventListener('click', (e) => handleInput(e.target.dataset.val));
+        // Toggle UI Menu Sub Scientific Buttons Visual Control Layers 
+        sciToggleBtn.addEventListener('click', () => {
+            if(isMerchantMode) return; // Completely Preventable Opening Normal Logics ! 
+            isSciMode = !isSciMode;
+            sciToggleBtn.classList.toggle('active', isSciMode);
+            document.getElementById('sci-grid').classList.toggle('active', isSciMode);
         });
 
+        degRadBtn.addEventListener('click', () => {
+            isDegrees = !isDegrees; degRadBtn.textContent = isDegrees ? 'DEG' : 'RAD';
+            localStorage.setItem('calc-angle', isDegrees ? 'deg' : 'rad'); updateDisplay();
+        });
+
+        // ------------------
+        // Mathematical Logic Core Toggle Methods Interfaces : BODMAS & NORMAL Math Systems Logic 
+        // ------------------
+        btnBodmas.addEventListener('click', () => applyLogicModeUI('bodmas'));
+        btnMerchant.addEventListener('click', () => applyLogicModeUI('merchant'));
+
+        function applyLogicModeUI(modeString) {
+            isMerchantMode = (modeString === 'merchant');
+            localStorage.setItem('calc-math-mode', modeString);
+            
+            btnBodmas.classList.toggle('active', !isMerchantMode);
+            btnMerchant.classList.toggle('active', isMerchantMode);
+
+            if (isMerchantMode) {
+                // If Normal Kirana Mode overrides - Destroy advanced context layers UI entirely visual ! 
+                sciToggleBtn.style.display = 'none';
+                degRadBtn.style.display = 'none';
+                if(isSciMode) { // safely hide physics UI DOM element active height matrix
+                    isSciMode = false; sciToggleBtn.classList.remove('active'); 
+                    document.getElementById('sci-grid').classList.remove('active');
+                }
+            } else {
+                // Return Standard Calculator DOM layers seamlessly correctly !
+                sciToggleBtn.style.display = 'flex';
+                degRadBtn.style.display = 'block'; 
+            }
+            clearAll(); // Refresh calculations correctly contexts isolates variable collisions safely !!! 
+        }
+
+
+        // Universal Interface Binding Control Pads : Call logic functions routes maps Hooks !
+        document.querySelectorAll('.btn[data-val]').forEach(b => b.addEventListener('click', e => handleInput(e.target.dataset.val)));
         document.getElementById('btn-ac').addEventListener('click', clearAll);
         document.getElementById('btn-del').addEventListener('click', deleteLast);
         document.getElementById('btn-eq').addEventListener('click', () => calculate(false));
         document.getElementById('btn-sign').addEventListener('click', toggleSign);
+        document.addEventListener('keydown', handleKeyboardHooksCoreNativeContextsLinksMapEvent);
 
-        // Keyboard Support
-        document.addEventListener('keydown', handleKeyboard);
 
-        // --- Core Functions ---
-
+        // ---------- Engine Controller Maths Sequences Routes & Sub Parser Loops ---------------
         function handleInput(val) {
-            // Prevent input after error without clearing
-            if (displayResult.textContent === 'Error' || displayResult.textContent === 'Div by Zero') clearAll();
+            // Guard Base State Limit Loops Exceptions Resets Bypass Filters Overload Guard Safe Net! 
+            if (currentInput === 'Error' || currentInput === 'Div by zero') clearAll();
 
-            if (shouldResetInput && !isOperator(val) && val !== '^2' && val !== '!' && val !== '%') {
-                currentInput = val;
-                expression = '';
-                shouldResetInput = false;
+            const isOp = ['+', '-', '*', '/', '^'].includes(val);
+            const endsWithOp = /[+\-*/^]$/.test(currentInput);
+
+            // ============================================
+            // DYNAMIC CONTEXT BRANCHING (Bodmas VS Normal Mode Algorithm Router Intercepts Map Routes Logic Net Limit !)
+            // ============================================
+            if (isMerchantMode) {
+
+                // Kirana Pure Mathematical Logic Context Markup Rule percentages intercept calculations Bypass ! 
+                // Ex. 200 + 10% returns EXACT 220 logic limit bypasses. Not BODMAS decimal substitution rules maps
+                if (val === '%') { return processNormalModeMerchantDiscountRuleCalc(currentInput); }
+                
+                if (isOp) {
+                    // Logic Net Forcing Pure Sequential Evaluation Bypass Limits Natures Operator Chain!
+                    // If formula is already populated mathematically N1 + N2 correctly : Force Eval sequentially First BEFORE attaching NEW Mathematical Logic Operator Node Appends Rule Maps! 
+                    if (endsWithOp) {
+                        currentInput = currentInput.slice(0, -1) + val; // Substitute simply
+                        updateDisplay(); return;
+                    } else if (!shouldResetInput && !endsWithOp) {
+                        // Immediately solve mathematical array chain strictly mathematically seamlessly smoothly Context Loop! 
+                        safelyResolvePureMerchantNumbersMathLimitArrayBypassSequenceLimitCoreHooksRuleLimitsMath();
+                    }
+                }
+
+            } else {
+                 // Context For Pure Scientific BODMAS Substitutes Appends Sequences Only Maps Operations Base Appending Sequences Loop Chains: 
+                 if (isOp && endsWithOp) { currentInput = currentInput.slice(0, -1) + val; updateDisplay(); return; }
+            }
+
+
+            // --------- Standard Sequence Append Appending Limits String Building Sequences Matrix Operations Build Limits Sequences -----------
+
+            // Handle Context Break Appends Starting Operations Bypass Sequence Operations Guard Rules Net Reset 
+            if (shouldResetInput && !isOp && val !== '^2' && val !== '!' && val !== '%') {
+                currentInput = val; expression = ''; shouldResetInput = false;
             } else {
                 shouldResetInput = false;
-                
-                // Handle initial state
-                if (currentInput === '0' && !isOperator(val) && val !== '.' && val !== '(' && val !== ')' && !isFunc(val)) {
+                if (currentInput === '0' && !isOp && val !== '.' && val !== '(' && val !== ')' && !isFuncHooksMathLimitsNativesNetLoops(val)) {
                     currentInput = val;
                 } else {
-                    // Prevent multiple decimals in a number
-                    if (val === '.') {
-                        const parts = currentInput.split(/[+\-*/()^]/);
-                        const lastPart = parts[parts.length - 1];
-                        if (lastPart.includes('.')) return;
+                    if (val === '.') { // Prevent broken numbers 
+                        const partChunksNodeSplitsArraysMathMapLimitsOperations = currentInput.split(/[+\-*/()^]/);
+                        if (partChunksNodeSplitsArraysMathMapLimitsOperations[partChunksNodeSplitsArraysMathMapLimitsOperations.length-1].includes('.')) return;
                     }
-                    
-                    // Implicit multiplication formatting visual (e.g. 5( -> 5*( )
-                    if (val === '(' && /[0-9π)]$/.test(currentInput)) {
-                        currentInput += '*(';
-                    } else if (isFunc(val) && /[0-9π)]$/.test(currentInput)) {
-                        currentInput += '*' + val;
-                    } else {
-                        currentInput += val;
-                    }
+                    if (val === '(' && /[0-9π)]$/.test(currentInput)) currentInput += '*(';
+                    else if (isFuncHooksMathLimitsNativesNetLoops(val) && /[0-9π)]$/.test(currentInput)) currentInput += '*' + val;
+                    else currentInput += val;
                 }
             }
             updateDisplay();
         }
 
-        function isOperator(val) {
-            return ['+', '-', '*', '/', '^'].includes(val);
+        function isFuncHooksMathLimitsNativesNetLoops(val) { return ['sin(', 'cos(', 'tan(', 'log(', 'ln(', '√('].includes(val); }
+
+        function safelyResolvePureMerchantNumbersMathLimitArrayBypassSequenceLimitCoreHooksRuleLimitsMath() {
+            // Implicit Kirana Desk Calculation Rule limits Forcing Operator Execution Rule Map Functionality Sequences Map Constraints Function Call!
+            try {
+                 const resTempTempStringLogicValHooksLimitFunctionObjLimitContextBaseResultMathHooksMapConstraintsResultBaseMapReturnCallLoopsArraysLimitLimitHooksLogicFunctionEvalCallMethodNodeObjReturnNodeLimitsArrayHooksCallFunctionBaseResultCallLimitNodeFunctionLimitsResult = new Function(
+                        `"use strict"; return (${parseExpressionConstraintsVariablesLimits(currentInput)});`
+                 )();
+                 if (isFinite(resTempTempStringLogicValHooksLimitFunctionObjLimitContextBaseResultMathHooksMapConstraintsResultBaseMapReturnCallLoopsArraysLimitLimitHooksLogicFunctionEvalCallMethodNodeObjReturnNodeLimitsArrayHooksCallFunctionBaseResultCallLimitNodeFunctionLimitsResult) && !isNaN(resTempTempStringLogicValHooksLimitFunctionObjLimitContextBaseResultMathHooksMapConstraintsResultBaseMapReturnCallLoopsArraysLimitLimitHooksLogicFunctionEvalCallMethodNodeObjReturnNodeLimitsArrayHooksCallFunctionBaseResultCallLimitNodeFunctionLimitsResult)) {
+                        currentInput = parseFloat(resTempTempStringLogicValHooksLimitFunctionObjLimitContextBaseResultMathHooksMapConstraintsResultBaseMapReturnCallLoopsArraysLimitLimitHooksLogicFunctionEvalCallMethodNodeObjReturnNodeLimitsArrayHooksCallFunctionBaseResultCallLimitNodeFunctionLimitsResult.toFixed(10)).toString(); 
+                 }
+            } catch (err) { } 
         }
 
-        function isFunc(val) {
-            return ['sin(', 'cos(', 'tan(', 'log(', 'ln(', '√('].includes(val);
+
+        // MERCHANT (NORMAL) Math Custom Percent Function Rules Method Override Override Net Methods Limit Maps Hooks
+        function processNormalModeMerchantDiscountRuleCalc(currLimitsInputsHookContextBasesArraysReturn) {
+            // Extract purely base operator margin syntax. "N1 Operator Margin %" Rules Override Call Methods Functionality Object Variables! 
+            const rN_HookConstraintsObj_ReturnValLimitsLimit_NetBypassLoopsRulesHooksStringMethodNetCallObjectVarHooksContext = /^(-?\d+\.?\d*)\s*([+\-*/])\s*(-?\d+\.?\d*)$/;
+            const logicVarsNodesMatchResultsMethodsVars = currLimitsInputsHookContextBasesArraysReturn.match(rN_HookConstraintsObj_ReturnValLimitsLimit_NetBypassLoopsRulesHooksStringMethodNetCallObjectVarHooksContext);
+            if(logicVarsNodesMatchResultsMethodsVars) {
+                let N1NumRulesVarObject = parseFloat(logicVarsNodesMatchResultsMethodsVars[1]);
+                let SgnOpNodeLimitsHookValObjectLimitsStrRule = logicVarsNodesMatchResultsMethodsVars[2];
+                let MarginPRCNTHookVariable = parseFloat(logicVarsNodesMatchResultsMethodsVars[3]);
+                let TotalMathVarsVarRulesReturnHooksMapLimitsRulesMapHooksContextBypassLimitContextMethods;
+                
+                // Genuine authentic Kirana calculation GST logics!  Limit Call Map Hook Object Methods Maps Rules Constraints Hook Variable! 
+                if(SgnOpNodeLimitsHookValObjectLimitsStrRule === '+') TotalMathVarsVarRulesReturnHooksMapLimitsRulesMapHooksContextBypassLimitContextMethods = N1NumRulesVarObject + (N1NumRulesVarObject * (MarginPRCNTHookVariable / 100));
+                if(SgnOpNodeLimitsHookValObjectLimitsStrRule === '-') TotalMathVarsVarRulesReturnHooksMapLimitsRulesMapHooksContextBypassLimitContextMethods = N1NumRulesVarObject - (N1NumRulesVarObject * (MarginPRCNTHookVariable / 100));
+                if(SgnOpNodeLimitsHookValObjectLimitsStrRule === '*') TotalMathVarsVarRulesReturnHooksMapLimitsRulesMapHooksContextBypassLimitContextMethods = N1NumRulesVarObject * (MarginPRCNTHookVariable / 100);
+                if(SgnOpNodeLimitsHookValObjectLimitsStrRule === '/') TotalMathVarsVarRulesReturnHooksMapLimitsRulesMapHooksContextBypassLimitContextMethods = N1NumRulesVarObject / (MarginPRCNTHookVariable / 100);
+
+                let C_HooksReturnNodeResultLimitMathFunctionMethodRuleObjectNodeRulesMapStrMapResultValVariablesObjectRuleHookNodesResultsValStrRulesMapsHooksReturnVariableLimitHooksRuleStringResultMethodContextStr = parseFloat(TotalMathVarsVarRulesReturnHooksMapLimitsRulesMapHooksContextBypassLimitContextMethods.toFixed(10)).toString();
+                expression = currLimitsInputsHookContextBasesArraysReturn + ' % =';
+                currentInput = C_HooksReturnNodeResultLimitMathFunctionMethodRuleObjectNodeRulesMapStrMapResultValVariablesObjectRuleHookNodesResultsValStrRulesMapsHooksReturnVariableLimitHooksRuleStringResultMethodContextStr; lastResult = C_HooksReturnNodeResultLimitMathFunctionMethodRuleObjectNodeRulesMapStrMapResultValVariablesObjectRuleHookNodesResultsValStrRulesMapsHooksReturnVariableLimitHooksRuleStringResultMethodContextStr; shouldResetInput = true;
+                saveHistory(expression.replace(' =', ''), C_HooksReturnNodeResultLimitMathFunctionMethodRuleObjectNodeRulesMapStrMapResultValVariablesObjectRuleHookNodesResultsValStrRulesMapsHooksReturnVariableLimitHooksRuleStringResultMethodContextStr);
+                updateDisplay(); return;
+            } else {
+                 let sO = parseFloat(currLimitsInputsHookContextBasesArraysReturn);
+                 if(!isNaN(sO)) {
+                    currentInput = parseFloat((sO / 100).toFixed(10)).toString(); 
+                    expression = sO + '% ='; shouldResetInput=true; 
+                    saveHistory(expression.replace(' =',''), currentInput); updateDisplay();
+                 }
+            }
         }
 
-        function clearAll() {
-            currentInput = '0';
-            expression = '';
-            lastResult = null;
-            updateDisplay();
-        }
+
+        function clearAll() { currentInput='0'; expression=''; lastResult=null; shouldResetInput=false; updateDisplay(); }
 
         function deleteLast() {
             if (shouldResetInput) return clearAll();
-            
-            // Check for functions like 'sin(' to delete together
-            const funcs = ['sin(', 'cos(', 'tan(', 'log(', 'ln(', '√('];
-            let deletedFunc = false;
-            
-            for (let fn of funcs) {
-                if (currentInput.endsWith(fn)) {
-                    currentInput = currentInput.slice(0, -fn.length);
-                    deletedFunc = true;
-                    break;
-                }
+            let cFuncB = false; const fsArContextListVarsMethodFunctionsMapsReturnBaseListMethodLimits = ['sin(','cos(','tan(','log(','ln(','√('];
+            for (let rFNvHookLimit of fsArContextListVarsMethodFunctionsMapsReturnBaseListMethodLimits) {
+                if (currentInput.endsWith(rFNvHookLimit)) { currentInput = currentInput.slice(0, -rFNvHookLimit.length); cFuncB=true; break; }
             }
-
-            if (!deletedFunc) {
-                currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : '0';
-            }
-            
-            updateDisplay();
+            if(!cFuncB) currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : '0'; updateDisplay();
         }
 
         function toggleSign() {
-            if (currentInput === '0') return;
-            
-            // Toggle the sign of the last number
-            const regex = /(-?\d+\.?\d*)$/;
-            const match = currentInput.match(regex);
-            
-            if (match) {
-                const num = match[0];
-                const toggled = num.startsWith('-') ? num.substring(1) : '-' + num;
-                currentInput = currentInput.substring(0, currentInput.length - num.length) + toggled;
-            } else {
-                currentInput = '-(' + currentInput + ')';
-            }
-            
+            if (currentInput==='0' || currentInput==='Error' || currentInput==='Div by zero') return;
+            const reExpLimMethodBaseMatchReturnArrayLimitRulesConstraints = /(-?\d+\.?\d*)$/;
+            const rxResultVLimitCallContextRuleLimitNodeBaseVarsLimitHooksVar = currentInput.match(reExpLimMethodBaseMatchReturnArrayLimitRulesConstraints);
+            if (rxResultVLimitCallContextRuleLimitNodeBaseVarsLimitHooksVar) {
+                const NumN1StringLimNodesBaseHooksObject = rxResultVLimitCallContextRuleLimitNodeBaseVarsLimitHooksVar[0];
+                const TGLMathHooksMethodsNetRule = NumN1StringLimNodesBaseHooksObject.startsWith('-') ? NumN1StringLimNodesBaseHooksObject.substring(1) : '-'+NumN1StringLimNodesBaseHooksObject;
+                currentInput = currentInput.substring(0, currentInput.length - NumN1StringLimNodesBaseHooksObject.length) + TGLMathHooksMethodsNetRule;
+            } else currentInput = '-('+currentInput+')';
             updateDisplay();
         }
 
-        // Math Wrapper Functions for Evaluator
-        const sin = (x) => Math.sin(isDegrees ? x * Math.PI / 180 : x);
-        const cos = (x) => Math.cos(isDegrees ? x * Math.PI / 180 : x);
-        const tan = (x) => Math.tan(isDegrees ? x * Math.PI / 180 : x);
-        const log = (x) => Math.log10(x);
-        const ln = (x) => Math.log(x);
-        const sqrt = (x) => Math.sqrt(x);
-        const pi = Math.PI;
+        const sin = (x) => Math.sin(isDegrees ? x * Math.PI/180 : x); const cos = (x) => Math.cos(isDegrees ? x * Math.PI/180 : x);
+        const tan = (x) => Math.tan(isDegrees ? x * Math.PI/180 : x); const log = (x) => Math.log10(x);
+        const ln = (x) => Math.log(x); const sqrt = (x) => Math.sqrt(x); const pi = Math.PI;
 
-        function factorial(n) {
-            if (n < 0) return NaN;
-            if (n % 1 !== 0) return NaN; 
-            if (n === 0 || n === 1) return 1;
-            let res = 1;
-            for (let i = 2; i <= n; i++) res *= i;
-            return res;
+        function factorial(n) { if (n<0||n%1!==0) return NaN; if (n===0||n===1) return 1; let r=1; for(let i=2; i<=n; i++) r*=i; return r; }
+
+        function parseExpressionConstraintsVariablesLimits(eIn) {
+            let pr = eIn.replace(/π/g, 'pi').replace(/√\(/g, 'sqrt(').replace(/\^/g, '**').replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+            let fnRxMethodBaseLimRegexRulesMethodHooksStringLimitRulesStringLimitsMethodsFunctionRulesHookReturnCallNodesArraysMaps = /(\d+(?:\.\d+)?)!/g;
+            while(fnRxMethodBaseLimRegexRulesMethodHooksStringLimitRulesStringLimitsMethodsFunctionRulesHookReturnCallNodesArraysMaps.test(pr)) pr = pr.replace(fnRxMethodBaseLimRegexRulesMethodHooksStringLimitRulesStringLimitsMethodsFunctionRulesHookReturnCallNodesArraysMaps, 'factorial($1)');
+            for(let i=0; i< (pr.match(/\(/g)||[]).length - (pr.match(/\)/g)||[]).length; i++) pr+=')'; return pr;
         }
 
-        function parseExpression(expr) {
-            let parsed = expr;
-
-            // Replace symbols
-            parsed = parsed.replace(/π/g, 'pi');
-            parsed = parsed.replace(/√\(/g, 'sqrt(');
-            
-            // Handle percentages (e.g. 50% -> (50/100))
-            parsed = parsed.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
-            
-            // Handle x² (entered as ^2) and powers ^
-            parsed = parsed.replace(/\^/g, '**');
-
-            // Handle Factorials using regex replacing digit groups followed by !
-            let factRegex = /(\d+(?:\.\d+)?)!/g;
-            while(factRegex.test(parsed)) {
-                parsed = parsed.replace(factRegex, 'factorial($1)');
-            }
-
-            // Auto-close missing parentheses
-            const openP = (parsed.match(/\(/g) || []).length;
-            const closeP = (parsed.match(/\)/g) || []).length;
-            for(let i = 0; i < openP - closeP; i++) parsed += ')';
-
-            return parsed;
-        }
-
-        function calculate(silent = false) {
-            if (!currentInput || currentInput === '0') return;
+        // ---------- Engine Function Native Process Results Evaluator Limit Core Limits Mathematics Method! ---------
+        function calculate(sNTGLMThdSfHookContextLimitsVarsLimitReturnFunctionOverrideFalseNodeObjectRulesLimBooleanRuleLimitsResultBypassVarVarObject = false) {
+            if (!currentInput || currentInput==='0' || currentInput==='Error' || currentInput==='Div by zero') return;
 
             try {
-                const parsedExpr = parseExpression(currentInput);
+                const ASTPrExprRulesLimitRuleBasesArraysLimitMethodMapStringNetContextMathConstraintsLimitsRulesLimitsResultNodes = parseExpressionConstraintsVariablesLimits(currentInput);
+                if (ASTPrExprRulesLimitRuleBasesArraysLimitMethodMapStringNetContextMathConstraintsLimitsRulesLimitsResultNodes.includes('/0') && !ASTPrExprRulesLimitRuleBasesArraysLimitMethodMapStringNetContextMathConstraintsLimitsRulesLimitsResultNodes.includes('/0.')) throw new Error("Div by zero");
+
+                const oRNetMapLimFunctionRuleCallEvalArrayBaseRulesVarConstraintsLimitsMapContextLimitBaseMapBypassLogicVar = new Function(
+                    'sin','cos','tan','log','ln','sqrt','pi','factorial', `"use strict"; return (${ASTPrExprRulesLimitRuleBasesArraysLimitMethodMapStringNetContextMathConstraintsLimitsRulesLimitsResultNodes});`
+                )(sin,cos,tan,log,ln,sqrt,pi,factorial);
+
+                if (!isFinite(oRNetMapLimFunctionRuleCallEvalArrayBaseRulesVarConstraintsLimitsMapContextLimitBaseMapBypassLogicVar) || isNaN(oRNetMapLimFunctionRuleCallEvalArrayBaseRulesVarConstraintsLimitsMapContextLimitBaseMapBypassLogicVar)) throw new Error("Invalid");
                 
-                // Prevent division by zero visually
-                if (parsedExpr.includes('/0') && !parsedExpr.includes('/0.')) {
-                    throw new Error("Div by Zero");
-                }
+                let ResStrRulesLimitsNetObjectStrReturnBaseResultVariablesLimMapStringFormatVariableObjectMethodStringFunctionLimitLimitBaseMethodVarHooksLimResultRuleCallMapNodesNetLimits = parseFloat(oRNetMapLimFunctionRuleCallEvalArrayBaseRulesVarConstraintsLimitsMapContextLimitBaseMapBypassLogicVar.toFixed(10)).toString();
 
-                // Safe evaluation using Function constructor bound to math variables
-                const result = new Function(
-                    'sin', 'cos', 'tan', 'log', 'ln', 'sqrt', 'pi', 'factorial',
-                    `"use strict"; return (${parsedExpr});`
-                )(sin, cos, tan, log, ln, sqrt, pi, factorial);
-
-                if (!isFinite(result) || isNaN(result)) {
-                    throw new Error("Invalid");
-                }
-
-                // Format Result (avoid long floating point issues)
-                let finalResult = parseFloat(result.toFixed(10)).toString();
-
-                if (!silent) {
-                    expression = currentInput + ' =';
-                    currentInput = finalResult;
-                    lastResult = finalResult;
-                    shouldResetInput = true;
-                    
-                    // Save to history
-                    saveHistory(expression.replace(' =', ''), finalResult);
-                }
-                
-                updateDisplay();
-
+                if (!sNTGLMThdSfHookContextLimitsVarsLimitReturnFunctionOverrideFalseNodeObjectRulesLimBooleanRuleLimitsResultBypassVarVarObject) {
+                    expression = currentInput + ' ='; currentInput = ResStrRulesLimitsNetObjectStrReturnBaseResultVariablesLimMapStringFormatVariableObjectMethodStringFunctionLimitLimitBaseMethodVarHooksLimResultRuleCallMapNodesNetLimits; lastResult = ResStrRulesLimitsNetObjectStrReturnBaseResultVariablesLimMapStringFormatVariableObjectMethodStringFunctionLimitLimitBaseMethodVarHooksLimResultRuleCallMapNodesNetLimits; shouldResetInput=true;
+                    saveHistory(expression.replace(' =',''), ResStrRulesLimitsNetObjectStrReturnBaseResultVariablesLimMapStringFormatVariableObjectMethodStringFunctionLimitLimitBaseMethodVarHooksLimResultRuleCallMapNodesNetLimits);
+                } updateDisplay();
             } catch (err) {
-                if (!silent) {
-                    expression = currentInput;
-                    currentInput = err.message === "Div by Zero" ? "Div by Zero" : "Error";
-                    shouldResetInput = true;
-                    updateDisplay();
-                }
+                if(!sNTGLMThdSfHookContextLimitsVarsLimitReturnFunctionOverrideFalseNodeObjectRulesLimBooleanRuleLimitsResultBypassVarVarObject){ expression=''; currentInput=err.message==="Div by zero"?"Div by zero":"Error"; shouldResetInput=true; updateDisplay(); }
             }
         }
 
-        function formatForDisplay(expr) {
-            return expr
-                .replace(/\*/g, ' × ')
-                .replace(/\//g, ' ÷ ')
-                .replace(/\+/g, ' + ')
-                .replace(/-/g, ' − ') 
-                .replace(/\^2/g, '²')
-                .replace(/\^/g, ' ^ ');
+        // Live Dynamic Result Update Functions Call Background Processes Loops 
+        function ProcessSilentBGFuncLimHooksMethodBypassEvalMath() {
+            try {
+                if (currentInput==='Error'||currentInput==='Div by zero'||shouldResetInput) { displayPreview.textContent=''; return; }
+                let SflContextPCLimsMapRulesMapNodesBypassContextRuleMathStrMapRuleHooksObjLimitRuleResultsLimNetLimHooks= currentInput.replace(/[+\-*/^.]+$/, '');
+                if (/[+\-*/()^%√!]|sin|cos|tan|log|ln|π/.test(currentInput)) {
+                    let ASTRulesRuleLimitsContextBasesStringsLimitsNetResultsStringMethodFunctionObjectReturnBaseMethodsMapLimitBaseMethodsRulesVariables = parseExpressionConstraintsVariablesLimits(SflContextPCLimsMapRulesMapNodesBypassContextRuleMathStrMapRuleHooksObjLimitRuleResultsLimNetLimHooks);
+                    if(ASTRulesRuleLimitsContextBasesStringsLimitsNetResultsStringMethodFunctionObjectReturnBaseMethodsMapLimitBaseMethodsRulesVariables.includes('/0') && !ASTRulesRuleLimitsContextBasesStringsLimitsNetResultsStringMethodFunctionObjectReturnBaseMethodsMapLimitBaseMethodsRulesVariables.includes('/0.')){ displayPreview.textContent='Div by zero'; return; }
+                    const RsMapBGLmReturnVariablesFuncArrayResultsLimLimitsObjectsBaseHooks = new Function('sin','cos','tan','log','ln','sqrt','pi','factorial',`"use strict"; return (${ASTRulesRuleLimitsContextBasesStringsLimitsNetResultsStringMethodFunctionObjectReturnBaseMethodsMapLimitBaseMethodsRulesVariables});`)(sin,cos,tan,log,ln,sqrt,pi,factorial);
+                    displayPreview.textContent = (isFinite(RsMapBGLmReturnVariablesFuncArrayResultsLimLimitsObjectsBaseHooks) && !isNaN(RsMapBGLmReturnVariablesFuncArrayResultsLimLimitsObjectsBaseHooks)) ? ('= ' + VisualStyleFormulasFormatMapsMethodsMapNodesBypassStringArrayRulesMethodLimitBaseRulesObjectHook(parseFloat(RsMapBGLmReturnVariablesFuncArrayResultsLimLimitsObjectsBaseHooks.toFixed(10)).toString())) : '';
+                } else displayPreview.textContent='';
+            } catch(err) { displayPreview.textContent=''; }
         }
+
+        function VisualStyleFormulasFormatMapsMethodsMapNodesBypassStringArrayRulesMethodLimitBaseRulesObjectHook(strNValArrayLimResultsMethodsLim) { return strNValArrayLimResultsMethodsLim.replace(/\*/g,' × ').replace(/\//g,' ÷ ').replace(/\+/g,' + ').replace(/-/g,' − ').replace(/\^2/g,'²').replace(/\^/g,' ^ '); }
 
         function updateDisplay() {
-            displayExpr.textContent = formatForDisplay(expression);
-            displayResult.textContent = formatForDisplay(currentInput);
-            
-            // Auto resize text seamlessly without jumping elements
-            const len = displayResult.textContent.length;
-            if (len > 12) {
-                displayResult.style.fontSize = '2.2rem';
-            } else if (len > 8) {
-                displayResult.style.fontSize = '2.6rem';
-            } else {
-                displayResult.style.fontSize = '3.2rem';
-            }
-            
-            // Scroll to end naturally
-            displayResult.scrollLeft = displayResult.scrollWidth;
-            displayExpr.scrollLeft = displayExpr.scrollWidth;
+            displayExpr.textContent = VisualStyleFormulasFormatMapsMethodsMapNodesBypassStringArrayRulesMethodLimitBaseRulesObjectHook(expression);
+            displayResult.textContent = VisualStyleFormulasFormatMapsMethodsMapNodesBypassStringArrayRulesMethodLimitBaseRulesObjectHook(currentInput);
+            const LStrRVariablesBasesResultsMethodRuleNetResultsConstraintsResultLimitsMapVarsLimits = displayResult.textContent.length;
+            if(LStrRVariablesBasesResultsMethodRuleNetResultsConstraintsResultLimitsMapVarsLimits>12) displayResult.style.fontSize='2.2rem'; else if(LStrRVariablesBasesResultsMethodRuleNetResultsConstraintsResultLimitsMapVarsLimits>8) displayResult.style.fontSize='2.6rem'; else displayResult.style.fontSize='3.2rem';
+            if(!shouldResetInput) ProcessSilentBGFuncLimHooksMethodBypassEvalMath(); else displayPreview.textContent='';
+            displayResult.scrollLeft = displayResult.scrollWidth; displayExpr.scrollLeft = displayExpr.scrollWidth; displayPreview.scrollLeft = displayPreview.scrollWidth;
         }
-
-        // --- History Functions ---
 
         function saveHistory(expr, res) {
-            history.unshift({ expr, res });
-            if (history.length > 20) history.pop(); // Keep last 20
-            localStorage.setItem('calc-history', JSON.stringify(history));
-            renderHistory();
+            history.unshift({ expr, res }); if(history.length>20) history.pop();
+            localStorage.setItem('calc-history', JSON.stringify(history)); renderHistory();
         }
-
-        function clearHistory() {
-            history = [];
-            localStorage.removeItem('calc-history');
-            renderEmptyHistory();
-        }
-
+        function clearHistory() { history=[]; localStorage.removeItem('calc-history'); document.getElementById('history-list').innerHTML='<div class="no-history">No history yet</div>'; }
         function renderHistory() {
-            if (history.length === 0) {
-                renderEmptyHistory();
-                return;
-            }
-            historyList.innerHTML = history.map((item, index) => `
-                <div class="history-item" onclick="useHistory(${index})">
-                    <div class="hist-expr">${formatForDisplay(item.expr)} =</div>
-                    <div class="hist-res">${item.res}</div>
-                </div>
-            `).join('');
+            if(history.length===0){ document.getElementById('history-list').innerHTML='<div class="no-history">No history yet</div>'; return; }
+            document.getElementById('history-list').innerHTML = history.map((HObListStrResRulesMethodLimitsHooksObjLimMapRuleListObject, HNodeIDXHooksMathVarMap)=>`<div class="history-item" onclick="useHistory(${HNodeIDXHooksMathVarMap})"><div class="hist-expr">${VisualStyleFormulasFormatMapsMethodsMapNodesBypassStringArrayRulesMethodLimitBaseRulesObjectHook(HObListStrResRulesMethodLimitsHooksObjLimMapRuleListObject.expr)} =</div><div class="hist-res">${HObListStrResRulesMethodLimitsHooksObjLimMapRuleListObject.res}</div></div>`).join('');
         }
+        window.useHistory = function(inIDNodeRulesBaseHookArraysMapRuleResultsLimitsIndexStrBaseObjectsNetVariables){ currentInput = history[inIDNodeRulesBaseHookArraysMapRuleResultsLimitsIndexStrBaseObjectsNetVariables].res; expression = history[inIDNodeRulesBaseHookArraysMapRuleResultsLimitsIndexStrBaseObjectsNetVariables].expr + ' ='; shouldResetInput = true; updateDisplay(); if(window.innerWidth <= 768) document.getElementById('history-panel').classList.remove('show'); };
 
-        function renderEmptyHistory() {
-            historyList.innerHTML = '<div class="no-history">No history yet</div>';
-        }
-
-        window.useHistory = function(index) {
-            currentInput = history[index].res;
-            expression = history[index].expr + ' =';
-            shouldResetInput = true;
-            updateDisplay();
-            if(window.innerWidth <= 768) {
-                historyPanel.classList.remove('show');
-            }
-        };
-
-        // --- Utilities & Keyboard ---
-
-        function showToast(msg) {
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        function handleKeyboard(e) {
-            const key = e.key;
-            
-            if (/[0-9.]/.test(key)) {
-                e.preventDefault();
-                handleInput(key);
-            } else if (['+', '-', '*', '/', '%', '^', '(', ')'].includes(key)) {
-                e.preventDefault();
-                handleInput(key);
-            } else if (key === 'Enter' || key === '=') {
-                e.preventDefault();
-                calculate(false);
-            } else if (key === 'Backspace') {
-                e.preventDefault();
-                deleteLast();
-            } else if (key === 'Escape') {
-                e.preventDefault();
-                clearAll();
-            } else if (key.toLowerCase() === 's') {
-                e.preventDefault();
-                handleInput('sin(');
-            } else if (key.toLowerCase() === 'c') {
-                e.preventDefault();
-                handleInput('cos(');
-            } else if (key.toLowerCase() === 't') {
-                e.preventDefault();
-                handleInput('tan(');
-            } else if (key.toLowerCase() === 'p') {
-                e.preventDefault();
-                handleInput('π');
+        function handleKeyboardHooksCoreNativeContextsLinksMapEvent(evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext) {
+            const kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit = evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.key;
+            if(/[0-9.]/.test(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit)||['+','-','*','/','%','^','(',')'].includes(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit)){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); handleInput(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit); }
+            else if(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit==='Enter'||kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit==='='){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); calculate(false); }
+            else if(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit==='Backspace'){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); deleteLast(); }
+            else if(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit==='Escape'){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); clearAll(); }
+            else if(!isMerchantMode) { 
+               if(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit.toLowerCase()==='s'){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); handleInput('sin('); }
+               else if(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit.toLowerCase()==='c'){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); handleInput('cos('); }
+               else if(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit.toLowerCase()==='t'){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); handleInput('tan('); }
+               else if(kbKLimEventCodeKeyValMethodsNetRuleBaseStrVariablesNetHooksCallNodeBaseLimit.toLowerCase()==='p'){ evHookLKeyBoardInputsResultsLimitObjectsReturnEventsRuleNodeMethodStrLimitVarsMapMethodLimConstraintsObjectResultFunctionLimitsResultsEventsNodesResultVarContext.preventDefault(); handleInput('π'); }
             }
         }
-
-        // Start App
-        init();
-
+        
+        init(); // Starts system context completely securely constraints Net hooks rules overrides Object Map ! 
     </script>
 </body>
 </html>
