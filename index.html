@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My GitHub Projects</title>
+    <style>
+        /* CSS Variables for Light/Dark Mode */
+        :root {
+            --bg-color: #f4f6f9;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+            --primary: #007bff;
+            --primary-hover: #0056b3;
+            --border-color: #e1e4e8;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+            --primary: #4d94ff;
+            --primary-hover: #73aaff;
+            --border-color: #333;
+        }
+
+        /* Basic Setup */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        /* Header & Theme Button */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .theme-btn {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .theme-btn:hover {
+            border-color: var(--primary);
+        }
+
+        /* Search Section */
+        .search-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-options {
+            display: flex;
+            gap: 20px;
+            font-size: 15px;
+        }
+
+        .search-options label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* List Items */
+        .directory-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .list-item {
+            background: var(--card-bg);
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .list-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-name {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .item-dir {
+            font-size: 13px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .go-btn {
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .go-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Utility Class for JS */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>My Projects</h1>
+            <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+        </header>
+
+        <!-- Search Box -->
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search here..." onkeyup="performSearch()">
+            
+            <div class="search-options">
+                <label>
+                    <input type="radio" name="searchType" value="normal" checked onchange="performSearch()"> Normal Search
+                </label>
+                <label>
+                    <input type="radio" name="searchType" value="directory" onchange="performSearch()"> Directory Search
+                </label>
+            </div>
+        </div>
+
+        <!-- Directory Items List -->
+        <ul class="directory-list" id="itemList">
+            
+            <!-- First Item -->
+            <li class="list-item" data-name="calculator" data-dir="xyz">
+                <div class="item-info">
+                    <span class="item-name">calculator</span>
+                    <span class="item-dir">Directory: XYZ</span>
+                </div>
+                <!-- Go button which leads to XYZ directory -->
+                <a href="./XYZ/" class="go-btn">Go</a>
+            </li>
+
+            <!-- Second Item -->
+            <li class="list-item" data-name="txt" data-dir="pqrst">
+                <div class="item-info">
+                    <span class="item-name">TXT</span>
+                    <span class="item-dir">Directory: PQRST</span>
+                </div>
+                <!-- Go button which leads to PQRST directory -->
+                <a href="./PQRST/" class="go-btn">Go</a>
+            </li>
+
+        </ul>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. Theme Toggle Logic ---
+        function toggleTheme() {
+            const body = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeBtn.innerText = '🌙 Dark Mode';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeBtn.innerText = '☀️ Light Mode';
+            }
+        }
+
+        // --- 2. Search Logic ---
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            const items = document.querySelectorAll('.list-item');
+
+            items.forEach(item => {
+                // Get name and directory from data-attributes
+                const itemName = item.getAttribute('data-name').toLowerCase();
+                const itemDir = item.getAttribute('data-dir').toLowerCase();
+                
+                let isMatch = false;
+
+                if (searchType === 'normal') {
+                    // Normal search checks ONLY the item name (e.g. calculator, txt)
+                    isMatch = itemName.includes(searchInput);
+                } else if (searchType === 'directory') {
+                    // Directory search checks ONLY the directory name (e.g. xyz, pqrst)
+                    isMatch = itemDir.includes(searchInput);
+                }
+
+                // Show or Hide based on search result
+                if (isMatch) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
