@@ -207,18 +207,18 @@
                     <span class="item-name">calculator</span>
                     <span class="item-dir">Directory: calculator</span>
                 </div>
-                <!-- Go button which leads to XYZ directory -->
-                <a href="./XYZ/" class="go-btn">Go</a>
+                <!-- Go button which leads to calculator  directory -->
+                <a href="./calculator /" class="go-btn">Go</a>
             </li>
 
             <!-- Second Item -->
             <li class="list-item" data-name="txt" data-dir="txt">
                 <div class="item-info">
                     <span class="item-name">TXT</span>
-                    <span class="item-dir">Directory: PQRST</span>
+                    <span class="item-dir">Directory: txt</span>
                 </div>
-                <!-- Go button which leads to PQRST directory -->
-                <a href="./PQRST/" class="go-btn">Go</a>
+                <!-- Go button which leads to txt directory -->
+                <a href="./txt/" class="go-btn">Go</a>
             </li>
 
         </ul>
@@ -257,7 +257,7 @@
                     // Normal search checks ONLY the item name (e.g. calculator, txt)
                     isMatch = itemName.includes(searchInput);
                 } else if (searchType === 'directory') {
-                    // Directory search checks ONLY the directory name (e.g. xyz, pqrst)
+                    // Directory search checks ONLY the directory name (e.g. calculator , txt)
                     isMatch = itemDir.includes(searchInput);
                 }
 
