@@ -1,317 +1,294 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My GitHub Directory</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <style>
-        /* --- CSS Variables for Light & Dark Mode --- */
+        /* CSS Variables for Light and Dark Mode */
         :root {
-            --bg-color: #f3f4f6;
-            --text-color: #1f2937;
-            --container-bg: #ffffff;
-            --primary-color: #3b82f6;
-            --primary-hover: #2563eb;
-            --card-bg: #f9fafb;
-            --card-border: #e5e7eb;
-            --shadow: rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --bg-color: #f4f7f6;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --border-color: #dddddd;
+            --primary-btn: #007bff;
+            --primary-hover: #0056b3;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        [data-theme="dark"] {
-            --bg-color: #111827;
-            --text-color: #f9fafb;
-            --container-bg: #1f2937;
-            --primary-color: #60a5fa;
-            --primary-hover: #3b82f6;
-            --card-bg: #374151;
-            --card-border: #4b5563;
-            --shadow: rgba(0, 0, 0, 0.5);
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #f0f0f0;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --primary-btn: #3b82f6;
+            --primary-hover: #60a5fa;
+            --shadow: 0 4px 6px rgba(0,0,0,0.5);
         }
 
-        /* --- Global Styles --- */
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: var(--transition);
-            min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            padding: 2rem 1rem;
+            padding: 20px;
         }
 
         .container {
-            background-color: var(--container-bg);
             width: 100%;
             max-width: 600px;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px var(--shadow);
-            transition: var(--transition);
+            margin-top: 40px;
         }
 
-        /* --- Header & Theme Toggle --- */
-        header {
+        /* Header & Theme Toggle */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 20px;
         }
 
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
+        .header h1 {
+            font-size: 24px;
         }
 
         .theme-toggle {
-            background: none;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-
-        .theme-toggle:hover {
-            background-color: var(--primary-color);
-            color: #fff;
-        }
-
-        /* --- Search Section --- */
-        .search-container {
-            margin-bottom: 2rem;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            background-color: var(--bg-color);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
             color: var(--text-color);
-            font-size: 1rem;
-            outline: none;
-            margin-bottom: 1rem;
-            transition: var(--transition);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow);
         }
 
-        .search-box:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        /* Search Box & Options */
+        .search-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-btn);
         }
 
         .search-options {
             display: flex;
-            gap: 1.5rem;
-            font-size: 0.95rem;
+            gap: 20px;
+            font-size: 14px;
         }
 
         .search-options label {
-            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            cursor: pointer;
+            gap: 5px;
         }
 
-        /* --- Directory List --- */
+        /* List Items */
         .directory-list {
             list-style: none;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 15px;
         }
 
         .list-item {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: var(--card-bg);
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--card-border);
-            transition: var(--transition);
-        }
-
-        .list-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px var(--shadow);
-        }
-
-        .item-info {
-            display: flex;
-            flex-direction: column;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
 
         .item-name {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 500;
         }
 
         .item-dir {
-            font-size: 0.8rem;
-            color: #6b7280;
-            margin-top: 0.2rem;
-        }
-
-        [data-theme="dark"] .item-dir {
-            color: #9ca3af;
+            font-size: 12px;
+            color: gray;
+            margin-top: 4px;
+            display: none; /* UI को क्लीन रखने के लिए छिपाया गया है */
         }
 
         .go-btn {
-            background-color: var(--primary-color);
-            color: #ffffff;
             text-decoration: none;
-            padding: 0.5rem 1.5rem;
+            background-color: var(--primary-btn);
+            color: #ffffff;
+            padding: 8px 20px;
             border-radius: 6px;
-            font-weight: 500;
-            transition: var(--transition);
+            font-weight: 600;
+            transition: background-color 0.2s;
         }
 
         .go-btn:hover {
             background-color: var(--primary-hover);
         }
 
+        /* Error/Empty state message */
         .no-results {
             text-align: center;
-            padding: 1rem;
+            padding: 20px;
             display: none;
-            color: #ef4444;
-            font-weight: 500;
+            color: gray;
         }
-
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header>
-            <h1>📁 My Projects</h1>
-            <button class="theme-toggle" id="themeBtn">🌙 Dark Mode</button>
-        </header>
+        <!-- Header -->
+        <div class="header">
+            <h1>My Directories</h1>
+            <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙 Dark Mode</button>
+        </div>
 
+        <!-- Search Section -->
         <div class="search-container">
-            <input type="text" id="searchInput" class="search-box" placeholder="Search here...">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search here..." onkeyup="searchItems()">
+            
             <div class="search-options">
                 <label>
-                    <input type="radio" name="searchMode" value="normal" checked>
-                    Normal Search (Name)
+                    <input type="radio" name="searchType" value="normal" checked onchange="searchItems()"> Normal Search
                 </label>
                 <label>
-                    <input type="radio" name="searchMode" value="directory">
-                    Directory Search
+                    <input type="radio" name="searchType" value="directory" onchange="searchItems()"> Directory Search
                 </label>
             </div>
         </div>
 
+        <!-- Directory List -->
         <ul class="directory-list" id="directoryList">
             <!-- Item 1: Calculator -->
-            <li class="list-item" data-name="calculator" data-dir="XYZ">
-                <div class="item-info">
-                    <span class="item-name">🧮 calculator</span>
-                    <span class="item-dir">Dir: XYZ</span>
+            <li class="list-item" data-name="calculator" data-dir="calculator">
+                <div>
+                    <div class="item-name">Calculator</div>
+                    <div class="item-dir">Dir: calculator</div>
                 </div>
-                <a href="XYZ/" class="go-btn">Go ➔</a>
+                <a href="calculator/" class="go-btn">Go</a>
             </li>
 
             <!-- Item 2: TXT -->
-            <li class="list-item" data-name="TXT" data-dir="PQRST">
-                <div class="item-info">
-                    <span class="item-name">📄 TXT</span>
-                    <span class="item-dir">Dir: PQRST</span>
+            <li class="list-item" data-name="txt" data-dir="Txt">
+                <div>
+                    <div class="item-name">TXT</div>
+                    <div class="item-dir">Dir: Txt</div>
                 </div>
-                <a href="PQRST/" class="go-btn">Go ➔</a>
+                <a href="Txt/" class="go-btn">Go</a>
             </li>
-            
-            <!-- You can add more items here following the same structure -->
+
+            <!-- Item 3: Chess -->
+            <li class="list-item" data-name="chess" data-dir="chess">
+                <div>
+                    <div class="item-name">Chess</div>
+                    <div class="item-dir">Dir: Chess</div>
+                </div>
+                <a href="chess/" class="go-btn">Go</a>
+            </li>
+
+            <!-- Item 4: Recorder -->
+            <li class="list-item" data-name="recorder" data-dir="recorder">
+                <div>
+                    <div class="item-name">Recorder</div>
+                    <div class="item-dir">Dir: Recorder</div>
+                </div>
+                <a href="recorder/" class="go-btn">Go</a>
+            </li>
         </ul>
-        <div id="noResults" class="no-results">No results found!</div>
+
+        <div id="noResults" class="no-results">No matches found.</div>
     </div>
 
+    <!-- JavaScript Functions -->
     <script>
-        // --- Dark Mode / Light Mode Logic ---
+        // --- Theme Toggle Logic ---
+        const body = document.body;
         const themeBtn = document.getElementById('themeBtn');
-        const root = document.documentElement;
 
-        // Check local storage for saved theme
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            root.setAttribute('data-theme', savedTheme);
-            updateThemeButton(savedTheme);
+        // Check saved theme in LocalStorage
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            themeBtn.innerText = '☀️ Light Mode';
         }
 
-        themeBtn.addEventListener('click', () => {
-            const currentTheme = root.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            root.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeButton(newTheme);
-        });
-
-        function updateThemeButton(theme) {
-            if (theme === 'dark') {
-                themeBtn.innerHTML = '☀️ Light Mode';
+        function toggleTheme() {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeBtn.innerText = '☀️ Light Mode';
             } else {
-                themeBtn.innerHTML = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+                themeBtn.innerText = '🌙 Dark Mode';
             }
         }
 
         // --- Search Logic ---
-        const searchInput = document.getElementById('searchInput');
-        const searchRadios = document.querySelectorAll('input[name="searchMode"]');
-        const listItems = document.querySelectorAll('.list-item');
-        const noResultsMessage = document.getElementById('noResults');
+        function searchItems() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            const items = document.querySelectorAll('.list-item');
+            const noResults = document.getElementById('noResults');
+            let hasVisibleItems = false;
 
-        function performSearch() {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            const searchMode = document.querySelector('input[name="searchMode"]:checked').value;
-            let visibleCount = 0;
-
-            listItems.forEach(item => {
-                const itemName = item.getAttribute('data-name').toLowerCase();
-                const itemDir = item.getAttribute('data-dir').toLowerCase();
+            items.forEach(item => {
+                const name = item.getAttribute('data-name').toLowerCase();
+                const dir = item.getAttribute('data-dir').toLowerCase();
                 
                 let isMatch = false;
 
-                if (searchMode === 'normal') {
-                    // Search only by Name (e.g., calculator, TXT)
-                    isMatch = itemName.includes(searchTerm);
-                } else if (searchMode === 'directory') {
-                    // Search only by Directory Name (e.g., XYZ, PQRST)
-                    isMatch = itemDir.includes(searchTerm);
+                // Check which radio button is active
+                if (searchType === 'normal' && name.includes(query)) {
+                    isMatch = true;
+                } else if (searchType === 'directory' && dir.includes(query)) {
+                    isMatch = true;
                 }
 
-                // Show or Hide item
+                // Show or hide the item
                 if (isMatch) {
                     item.style.display = 'flex';
-                    visibleCount++;
+                    hasVisibleItems = true;
                 } else {
                     item.style.display = 'none';
                 }
             });
 
-            // Show "No results found" if everything is hidden
-            if (visibleCount === 0) {
-                noResultsMessage.style.display = 'block';
-            } else {
-                noResultsMessage.style.display = 'none';
-            }
+            // Show "No results" message if everything is hidden
+            noResults.style.display = hasVisibleItems ? 'none' : 'block';
         }
-
-        // Add event listeners for Search Input and Radio Buttons
-        searchInput.addEventListener('input', performSearch);
-        searchRadios.forEach(radio => {
-            radio.addEventListener('change', performSearch);
-        });
     </script>
 </body>
 </html>
