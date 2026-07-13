@@ -1,319 +1,451 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My GitHub Directory</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <style>
-        /* CSS Variables for Light and Dark Mode */
-        :root {
-            --bg-color: #f4f7f6;
-            --text-color: #333333;
-            --card-bg: #ffffff;
-            --border-color: #dddddd;
-            --primary-btn: #007bff;
-            --primary-hover: #0056b3;
-            --shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Directory</title>
+<style>
+/* ---- DEFAULT USER VARS (overridden by host settings from Firebase) ---- */
+:root {
+  --user-bg:#0d0d1a;
+  --user-surface:#1a1a3a;
+  --user-accent:#6d28d9;
+  --user-accent2:#8b5cf6;
+  --user-accent3:#a78bfa;
+  --user-text:#e2e8f0;
+  --user-text-muted:#94a3b8;
+  --user-border:#3730a3;
+  --user-item-bg:#12122a;
+  --user-topbar-bg:#0d0d1a;
+  --user-font:"'Segoe UI',system-ui,sans-serif";
+  --user-fontsize:15px;
+  --radius:14px;
+}
 
-        .dark-mode {
-            --bg-color: #121212;
-            --text-color: #f0f0f0;
-            --card-bg: #1e1e1e;
-            --border-color: #333333;
-            --primary-btn: #3b82f6;
-            --primary-hover: #60a5fa;
-            --shadow: 0 4px 6px rgba(0,0,0,0.5);
-        }
+/* ---- LIGHT MODE OVERRIDES ---- */
+body.light-mode {
+  --user-bg:#f8fafc;
+  --user-surface:#ffffff;
+  --user-accent:#6d28d9;
+  --user-accent2:#7c3aed;
+  --user-accent3:#8b5cf6;
+  --user-text:#1e293b;
+  --user-text-muted:#64748b;
+  --user-border:#e2e8f0;
+  --user-item-bg:#f1f5f9;
+  --user-topbar-bg:#ffffff;
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-        }
+* { margin:0;padding:0;box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background:var(--user-bg);
+  color:var(--user-text);
+  font-size:var(--user-fontsize,15px);
+  min-height:100vh;
+  transition:background .3s,color .3s;
+}
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
+/* TOPBAR */
+.topbar {
+  position:sticky;top:0;z-index:100;
+  background:var(--user-topbar-bg);
+  border-bottom:1px solid var(--user-border);
+  padding:0 16px;
+  backdrop-filter:blur(12px);
+  transition:background .3s;
+}
+.topbar-inner {
+  max-width:720px;margin:0 auto;
+  display:flex;align-items:center;gap:10px;
+  padding:11px 0;flex-wrap:wrap;
+}
+.back-btn {
+  background:transparent;border:1px solid var(--user-border);
+  color:var(--user-accent3);
+  padding:6px 13px;border-radius:10px;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all .2s;
+  white-space:nowrap;font-weight:500;
+}
+.back-btn:hover{background:rgba(139,92,246,.15);border-color:var(--user-accent2);}
+.breadcrumb {
+  flex:1;display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  font-size:12px;color:var(--user-text-muted);overflow:hidden;
+}
+.bc-home{cursor:pointer;color:var(--user-accent3);font-weight:500;}
+.bc-home:hover{text-decoration:underline;}
+.bc-sep{opacity:.4;}
+.bc-cur{color:var(--user-text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
+.bc-mid{color:var(--user-accent3);cursor:pointer;}
+.bc-mid:hover{text-decoration:underline;}
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            margin-top: 40px;
-        }
+/* THEME TOGGLE */
+.theme-toggle {
+  background:transparent;border:1px solid var(--user-border);
+  color:var(--user-text-muted);padding:6px 11px;border-radius:10px;
+  font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.theme-toggle:hover{border-color:var(--user-accent2);color:var(--user-accent3);}
 
-        /* Header & Theme Toggle */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+/* SORT ROW */
+.sort-row{max-width:720px;margin:0 auto;padding:10px 16px 4px;display:flex;gap:8px;}
+.sort-chip{
+  padding:5px 15px;border-radius:20px;font-size:12px;font-weight:600;
+  border:1px solid var(--user-border);color:var(--user-text-muted);
+  background:transparent;cursor:pointer;transition:all .2s;
+}
+.sort-chip.active{background:var(--user-accent);color:#fff;border-color:var(--user-accent);}
+.sort-chip:hover:not(.active){border-color:var(--user-accent2);color:var(--user-accent3);}
 
-        .header h1 {
-            font-size: 24px;
-        }
+/* PAGE HERO */
+.page-hero{max-width:720px;margin:0 auto;padding:22px 16px 12px;}
+.page-hero h1{
+  font-size:23px;font-weight:700;
+  background:linear-gradient(135deg,var(--user-accent3),var(--user-accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:4px;
+}
+.parent-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(139,92,246,.1);border:1px solid var(--user-border);
+  border-radius:20px;padding:4px 12px;font-size:12px;color:var(--user-accent3);
+  margin-bottom:12px;
+}
 
-        .theme-toggle {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: var(--shadow);
-        }
+/* LIST */
+.list-wrap{max-width:720px;margin:0 auto;padding:0 16px 48px;display:flex;flex-direction:column;gap:9px;}
+.list-item{
+  background:var(--user-item-bg);border:1px solid var(--user-border);
+  border-radius:var(--radius);padding:15px 16px;
+  display:flex;align-items:center;gap:12px;
+  transition:all .2s;animation:fadeIn .3s ease forwards;opacity:0;
+}
+@keyframes fadeIn{to{opacity:1;}}
+.list-item:hover{border-color:var(--user-accent2);background:var(--user-surface);box-shadow:0 4px 20px rgba(0,0,0,.15);}
+.item-num{
+  width:34px;height:34px;border-radius:9px;
+  background:rgba(139,92,246,.1);border:1px solid var(--user-border);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;color:var(--user-accent3);flex-shrink:0;
+}
+.item-name{flex:1;font-size:15px;font-weight:600;color:var(--user-text);line-height:1.3;}
+.item-btns{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.btn-details{
+  padding:6px 14px;background:rgba(139,92,246,.12);border:1px solid var(--user-border);
+  border-radius:9px;color:var(--user-accent3);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.btn-details:hover{background:rgba(139,92,246,.25);border-color:var(--user-accent2);}
+.btn-go{
+  padding:6px 16px;background:var(--user-accent);border:none;
+  border-radius:9px;color:#fff;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.btn-go:hover{background:var(--user-accent2);box-shadow:0 0 14px rgba(109,40,217,.4);}
+.btn-more{
+  padding:6px 16px;background:transparent;border:1.5px solid var(--user-accent2);
+  border-radius:9px;color:var(--user-accent2);font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.btn-more:hover{background:rgba(139,92,246,.15);}
 
-        /* Search Box & Options */
-        .search-container {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 30px;
-            border: 1px solid var(--border-color);
-        }
+/* DETAILS OVERLAY */
+.det-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;
+  padding:20px 16px;overflow-y:auto;
+}
+.det-overlay.open{display:flex;}
+.det-card{
+  background:var(--user-surface);border:1px solid var(--user-border);
+  border-radius:20px;padding:30px;width:100%;max-width:580px;
+  position:relative;margin:auto;
+  animation:slideUp .28s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes slideUp{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.det-close{
+  position:absolute;top:14px;right:14px;
+  background:rgba(255,255,255,.06);border:1px solid var(--user-border);
+  color:var(--user-text-muted);width:30px;height:30px;border-radius:7px;
+  cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.det-close:hover{background:rgba(255,255,255,.12);color:var(--user-text);}
+.det-name{
+  font-size:21px;font-weight:700;margin-bottom:14px;
+  background:linear-gradient(135deg,var(--user-accent3),var(--user-accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.det-body{
+  font-size:15px;line-height:1.75;color:var(--user-text-muted);
+  margin-bottom:22px;word-break:break-word;
+}
+.det-body a{color:var(--user-accent3);text-decoration:underline;}
+.det-footer{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
+.det-footer .btn-go,.det-footer .btn-more{padding:11px 30px;font-size:15px;border-radius:11px;}
 
-        .search-input {
-            width: 100%;
-            padding: 12px 15px;
-            font-size: 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            margin-bottom: 15px;
-            outline: none;
-        }
+/* LOADING/EMPTY */
+.loading-w{text-align:center;padding:60px 20px;color:var(--user-text-muted);}
+.spinner{width:38px;height:38px;border:3px solid var(--user-border);border-top-color:var(--user-accent2);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty-w{text-align:center;padding:60px 20px;color:var(--user-text-muted);}
+.empty-w .icon{font-size:46px;margin-bottom:12px;}
 
-        .search-input:focus {
-            border-color: var(--primary-btn);
-        }
-
-        .search-options {
-            display: flex;
-            gap: 20px;
-            font-size: 14px;
-        }
-
-        .search-options label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            gap: 5px;
-        }
-
-        /* List Items */
-        .directory-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .list-item {
-            background: var(--card-bg);
-            padding: 15px 20px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-        }
-
-        .item-name {
-            font-size: 18px;
-            font-weight: 500;
-        }
-
-        .item-dir {
-            font-size: 12px;
-            color: gray;
-            margin-top: 4px;
-            display: none; /* UI को क्लीन रखने के लिए छिपाया गया है */
-        }
-
-        .go-btn {
-            text-decoration: none;
-            background-color: var(--primary-btn);
-            color: #ffffff;
-            padding: 8px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            transition: background-color 0.2s;
-        }
-
-        .go-btn:hover {
-            background-color: var(--primary-hover);
-        }
-
-        /* Error/Empty state message */
-        .no-results {
-            text-align: center;
-            padding: 20px;
-            display: none;
-            color: gray;
-        }
-    </style>
+@media(max-width:500px){
+  .item-name{font-size:14px;}
+  .btn-details,.btn-go,.btn-more{padding:5px 10px;font-size:12px;}
+  .item-num{width:28px;height:28px;font-size:12px;}
+  .det-card{padding:20px;}
+}
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>My Directories</h1>
-            <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙 Dark Mode</button>
-        </div>
-
-        <!-- Search Section -->
-        <div class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search here..." onkeyup="searchItems()">
-            
-            <div class="search-options">
-                <label>
-                    <input type="radio" name="searchType" value="normal" checked onchange="searchItems()"> Normal Search
-                </label>
-                <label>
-                    <input type="radio" name="searchType" value="directory" onchange="searchItems()"> Directory Search
-                </label>
-            </div>
-        </div>
-
-        <!-- Directory List -->
-        <ul class="directory-list" id="directoryList">
-            <!-- Item 1: Calculator -->
-            <li class="list-item" data-name="calculator" data-dir="calculator ">
-                <div>
-                    <div class="item-name">Calculator</div>
-                    <div class="item-dir">Dir: calculator </div>
-                </div>
-                <a href="calculator /" class="go-btn">Go</a>
-            </li>
-
-            <!-- Item 2: TXT -->
-            <li class="list-item" data-name="txt" data-dir="txt">
-                <div>
-                    <div class="item-name">TXT</div>
-                    <div class="item-dir">Dir: txt</div>
-                </div>
-                <a href="txt/" class="go-btn">Go</a>
-            </li>
-
-            <!-- Item 3: Chess -->
-            <li class="list-item" data-name="chess" data-dir="chess">
-                <div>
-                    <div class="item-name">Chess</div>
-                    <div class="item-dir">Dir: Chess</div>
-                </div>
-                <a href="chess/" class="go-btn">Go</a>
-            </li>
-
-            <!-- Item 4: recoder -->
-            <li class="list-item" data-name="recoder" data-dir="recoder">
-                <div>
-                    <div class="item-name">recoder</div>
-                    <div class="item-dir">Dir: recoder</div>
-                </div>
-                <a href="recoder/" class="go-btn">Go</a>
-            </li>
-
-            <!-- Item 5: aaaa -->
-            <li class="list-item" data-name="aaaa" data-dir="bbbb">
-                <div>
-                    <div class="item-name">aaaa</div>
-                    <div class="item-dir">Dir: bbbb</div>
-                </div>
-                <a href="bbbb/" class="go-btn">Go</a>
-            </li>
-            <!-- Item 5: aaaa -->
-            <li class="list-item" data-name="aaaa" data-dir="bbbb">
-                <div>
-                    <div class="item-name">aaaa</div>
-                    <div class="item-dir">Dir: bbbb</div>
-                </div>
-                <a href="bbbb/" class="go-btn">Go</a>
-            </li>
-            <!-- Item 5: aaaa -->
-            <li class="list-item" data-name="aaaa" data-dir="bbbb">
-                <div>
-                    <div class="item-name">aaaa</div>
-                    <div class="item-dir">Dir: bbbb</div>
-                </div>
-                <a href="bbbb/" class="go-btn">Go</a>
-            </li>
-        </ul>
-
-        <div id="noResults" class="no-results">No matches found.</div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="back-btn" id="backBtn" onclick="goBack()" style="display:none">
+      ← Back
+    </button>
+    <div class="breadcrumb" id="breadcrumb">
+      <span class="bc-home" onclick="goToRoot()">🏠 Home</span>
     </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️ Light</button>
+  </div>
+</div>
 
-    <!-- JavaScript Functions -->
-    <script>
-        // --- Theme Toggle Logic ---
-        const body = document.body;
-        const themeBtn = document.getElementById('themeBtn');
+<!-- SORT CHIPS -->
+<div class="sort-row" id="sortRow">
+  <button class="sort-chip" id="chipDef" onclick="setSort('default')" title="Host's default order">Default</button>
+  <button class="sort-chip" id="chipAZ" onclick="setSort('az')">A→Z</button>
+  <button class="sort-chip" id="chipZA" onclick="setSort('za')">Z→A</button>
+</div>
 
-        // Check saved theme in LocalStorage
-        if (localStorage.getItem('theme') === 'dark') {
-            body.classList.add('dark-mode');
-            themeBtn.innerText = '☀️ Light Mode';
-        }
+<!-- PAGE HERO -->
+<div class="page-hero" id="pageHero">
+  <h1>📋 Directory</h1>
+</div>
 
-        function toggleTheme() {
-            body.classList.toggle('dark-mode');
-            if (body.classList.contains('dark-mode')) {
-                localStorage.setItem('theme', 'dark');
-                themeBtn.innerText = '☀️ Light Mode';
-            } else {
-                localStorage.setItem('theme', 'light');
-                themeBtn.innerText = '🌙 Dark Mode';
-            }
-        }
+<!-- LIST -->
+<div class="list-wrap" id="listWrap">
+  <div class="loading-w"><div class="spinner"></div><p>Loading...</p></div>
+</div>
 
-        // --- Search Logic ---
-        function searchItems() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const searchType = document.querySelector('input[name="searchType"]:checked').value;
-            const items = document.querySelectorAll('.list-item');
-            const noResults = document.getElementById('noResults');
-            let hasVisibleItems = false;
+<!-- DETAILS OVERLAY -->
+<div class="det-overlay" id="detOverlay">
+  <div class="det-card">
+    <button class="det-close" onclick="closeDet()">✕</button>
+    <div class="det-name" id="detName"></div>
+    <div class="det-body" id="detBody"></div>
+    <div class="det-footer" id="detFooter"></div>
+  </div>
+</div>
 
-            items.forEach(item => {
-                const name = item.getAttribute('data-name').toLowerCase();
-                const dir = item.getAttribute('data-dir').toLowerCase();
-                
-                let isMatch = false;
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-                // Check which radio button is active
-                if (searchType === 'normal' && name.includes(query)) {
-                    isMatch = true;
-                } else if (searchType === 'directory' && dir.includes(query)) {
-                    isMatch = true;
-                }
+const firebaseConfig = {
+  apiKey:"AIzaSyDmnxR6lGjoBCzfmG5AdjI_s4oA5r0lRvM",
+  authDomain:"my-web-link.firebaseapp.com",
+  databaseURL:"https://my-web-link-default-rtdb.firebaseio.com",
+  projectId:"my-web-link",
+  storageBucket:"my-web-link.firebasestorage.app",
+  messagingSenderId:"303962388734",
+  appId:"1:303962388734:web:b5ca5f0d2f77a70a3e4daf"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
 
-                // Show or hide the item
-                if (isMatch) {
-                    item.style.display = 'flex';
-                    hasVisibleItems = true;
-                } else {
-                    item.style.display = 'none';
-                }
-            });
+// ---- THEME ----
+let isLight = localStorage.getItem('userTheme')==='light';
+function applyTheme(){
+  document.body.classList.toggle('light-mode', isLight);
+  document.getElementById('themeToggle').textContent = isLight ? '🌙 Dark' : '☀️ Light';
+}
+window.toggleTheme = function(){
+  isLight = !isLight;
+  localStorage.setItem('userTheme', isLight?'light':'dark');
+  applyTheme();
+};
+applyTheme();
 
-            // Show "No results" message if everything is hidden
-            noResults.style.display = hasVisibleItems ? 'none' : 'block';
-        }
-    </script>
+// ---- LOAD HOST SETTINGS (colors/fonts) ----
+async function loadHostSettings(){
+  try{
+    const snap = await get(ref(db,'settings'));
+    if(!snap.exists()) return;
+    const s = snap.val();
+    if(s.colors){
+      const root = document.documentElement;
+      Object.entries(s.colors).forEach(([key,val])=>{
+        // Only apply in dark mode (light mode uses light-mode overrides)
+        root.style.setProperty(key, val);
+      });
+    }
+    if(s.fontFamily){
+      document.body.style.fontFamily = s.fontFamily.replace(/^'+|'+$/g,'');
+    }
+    if(s.fontSize){
+      document.body.style.fontSize = s.fontSize;
+    }
+  }catch(e){}
+}
+loadHostSettings();
+
+// ---- STATE ----
+let curDirId = 'root';
+let navStack = [];   // [{id,name}]
+let curItems  = [];  // all visible items sorted by host default
+let sortMode  = 'default';
+let unsub     = null;
+
+// ---- LOAD DIR ----
+function loadDir(dirId){
+  curDirId  = dirId;
+  sortMode  = 'default';
+  updateChips();
+  renderBreadcrumb();
+  renderHero();
+  document.getElementById('backBtn').style.display = navStack.length>0?'flex':'none';
+
+  if(unsub) unsub();
+  const lRef = ref(db, `directories/${dirId}/items`);
+  document.getElementById('listWrap').innerHTML = '<div class="loading-w"><div class="spinner"></div><p>Loading...</p></div>';
+
+  unsub = onValue(lRef, snap=>{
+    curItems = [];
+    if(snap.exists()) snap.forEach(ch=>{ const v={id:ch.key,...ch.val()}; if(!v.hidden) curItems.push(v); });
+    curItems.sort((a,b)=>(a.order||0)-(b.order||0));
+    renderItems();
+  });
+}
+
+// ---- BREADCRUMB ----
+function renderBreadcrumb(){
+  let h = `<span class="bc-home" onclick="goToRoot()">🏠 Home</span>`;
+  navStack.forEach((n,i)=>{
+    h += `<span class="bc-sep"> › </span>`;
+    if(i<navStack.length-1) h += `<span class="bc-mid" onclick="jumpNav(${i})">${esc(n.name)}</span>`;
+    else h += `<span class="bc-cur">${esc(n.name)}</span>`;
+  });
+  document.getElementById('breadcrumb').innerHTML = h;
+}
+window.jumpNav = function(idx){ navStack=navStack.slice(0,idx+1); loadDir(navStack[idx].id); };
+
+// ---- HERO ----
+function renderHero(){
+  const el = document.getElementById('pageHero');
+  if(navStack.length===0){ el.innerHTML='<h1>📋 Directory</h1>'; return; }
+  const cur = navStack[navStack.length-1];
+  const pathBadge = navStack.length>1
+    ? `<div class="parent-badge">📂 ${esc(navStack.slice(0,-1).map(n=>n.name).join(' › '))}</div>` : '';
+  el.innerHTML = `${pathBadge}<h1>${esc(cur.name)}</h1>`;
+}
+
+// ---- SORT ----
+function updateChips(){
+  document.getElementById('chipDef').classList.toggle('active', sortMode==='default');
+  document.getElementById('chipAZ').classList.toggle('active',  sortMode==='az');
+  document.getElementById('chipZA').classList.toggle('active',  sortMode==='za');
+}
+window.setSort = function(mode){
+  sortMode = mode;
+  updateChips();
+  renderItems();
+};
+
+// ---- RENDER ITEMS ----
+function renderItems(){
+  const wrap = document.getElementById('listWrap');
+  if(!curItems.length){ wrap.innerHTML='<div class="empty-w"><div class="icon">📭</div><p>No items found.</p></div>'; return; }
+  let list = [...curItems];
+  if(sortMode==='az') list.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sortMode==='za') list.sort((a,b)=>b.name.localeCompare(a.name));
+  // default: already sorted by host order
+
+  wrap.innerHTML='';
+  list.forEach((item,idx)=>{
+    const el = document.createElement('div');
+    el.className='list-item';
+    el.style.animationDelay=(idx*40)+'ms';
+
+    // Determine action button
+    let actionBtn='';
+    if(item.actionType==='link'){
+      actionBtn=`<button class="btn-go" onclick="handleGo('${item.id}')">Go</button>`;
+    } else if(item.actionType==='directory'){
+      actionBtn=`<button class="btn-go" onclick="handleGo('${item.id}')">Go</button>`;
+    } else if(item.actionType==='more'){
+      actionBtn=`<button class="btn-more" onclick="handleMore('${item.id}','${ea(item.name)}')">More</button>`;
+    } else {
+      actionBtn=`<button class="btn-more" onclick="handleMore('${item.id}','${ea(item.name)}')">More</button>`;
+    }
+
+    el.innerHTML=`
+      <div class="item-num">${idx+1}</div>
+      <div class="item-name">${esc(item.name)}</div>
+      <div class="item-btns">
+        <button class="btn-details" onclick="showDet('${item.id}')">Details</button>
+        ${actionBtn}
+      </div>`;
+    wrap.appendChild(el);
+  });
+}
+
+// ---- DETAILS ----
+window.showDet = function(id){
+  const item = curItems.find(i=>i.id===id); if(!item) return;
+  document.getElementById('detName').textContent = item.name||'';
+  document.getElementById('detBody').innerHTML = item.details
+    ? item.details.replace(/\n/g,'<br>')
+    : '<em style="opacity:.5">No details available.</em>';
+  let ft='';
+  if(item.actionType==='link') ft=`<button class="btn-go" onclick="handleGo('${item.id}')">Go</button>`;
+  else if(item.actionType==='directory') ft=`<button class="btn-go" onclick="handleGo('${item.id}')">Go</button>`;
+  else if(item.actionType==='more') ft=`<button class="btn-more" onclick="closeDet();handleMore('${item.id}','${ea(item.name)}')">More</button>`;
+  else ft=`<button class="btn-more" onclick="closeDet();handleMore('${item.id}','${ea(item.name)}')">More</button>`;
+  document.getElementById('detFooter').innerHTML=ft;
+  document.getElementById('detOverlay').classList.add('open');
+};
+window.closeDet = function(){ document.getElementById('detOverlay').classList.remove('open'); };
+document.getElementById('detOverlay').addEventListener('click',function(e){if(e.target===this)closeDet();});
+
+// ---- GO ----
+window.handleGo = function(id){
+  const item=curItems.find(i=>i.id===id); if(!item) return;
+  closeDet();
+  if(item.actionType==='link'){
+    // Open link in new tab
+    window.open(item.actionValue,'_blank','noopener,noreferrer');
+  } else if(item.actionType==='directory'){
+    // Open directory URL in new tab
+    window.open(item.actionValue,'_blank','noopener,noreferrer');
+  }
+};
+
+// ---- MORE ----
+window.handleMore = function(id, name){
+  closeDet();
+  navStack.push({id, name});
+  loadDir(id);
+};
+
+// ---- NAV ----
+window.goBack = function(){
+  if(!navStack.length) return;
+  navStack.pop();
+  navStack.length===0 ? loadDir('root') : loadDir(navStack[navStack.length-1].id);
+};
+window.goToRoot = function(){ navStack=[]; loadDir('root'); };
+
+// ---- UTILS ----
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ea(s){ return String(s||'').replace(/'/g,"\\'"); }
+
+// ---- INIT ----
+loadDir('root');
+</script>
 </body>
 </html>
