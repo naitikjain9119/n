@@ -248,7 +248,7 @@ window.jumpNav=function(idx){navStack=navStack.slice(0,idx+1);loadDir(navStack[i
 // ---- HERO ----
 function renderHero(){
   const el=document.getElementById('pageHero');
-  if(navStack.length===0){el.innerHTML='<h1>📋 Directory</h1>';return;}
+  if(navStack.length===0){el.innerHTML='<h1>📋 THIS WEBSITE IS MADE BY NAITIK JAIN DHALAWAT  </h1>';return;}
   const cur=navStack[navStack.length-1];
   const badge=navStack.length>1?`<div class="parent-badge">📂 ${esc(navStack.slice(0,-1).map(n=>n.name).join(' › '))}</div>`:'';
   el.innerHTML=`${badge}<h1>${esc(cur.name)}</h1>`;
