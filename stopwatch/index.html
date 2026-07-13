@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Professional Stopwatch</title>
+    
+    <style>
+        /* CSS Variables & Theming */
+        :root {
+            --hue: 220;
+            --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+            --animation-speed: 1;
+            --ui-scale: 1;
+        }
+
+        [data-theme="dark"] {
+            --bg1: #0f172a;
+            --bg2: #1e293b;
+            --glass-bg: rgba(30, 41, 59, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: rgba(0, 0, 0, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --fastest: #10b981;
+            --slowest: #ef4444;
+            --particle-color: rgba(96, 165, 250, 0.15);
+            --modal-bg: rgba(15, 23, 42, 0.85);
+        }
+
+        [data-theme="light"] {
+            --bg1: #e2e8f0;
+            --bg2: #cbd5e1;
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: rgba(0, 0, 0, 0.1);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #dc2626;
+            --success: #059669;
+            --warning: #d97706;
+            --fastest: #059669;
+            --slowest: #dc2626;
+            --particle-color: rgba(37, 99, 235, 0.1);
+            --modal-bg: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Reset & Base Setup */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--text-main);
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: color 0.5s ease, background 0.5s ease;
+            font-size: calc(16px * var(--ui-scale));
+        }
+
+        /* Canvas Background */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Container */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            width: 95%;
+            max-width: 900px;
+            height: 95vh;
+            height: 95dvh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px var(--glass-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Header */
+        header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            box-shadow: 0 0 10px var(--text-muted);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        
+        .status-text {
+            font-weight: 600;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-btn:hover {
+            color: var(--text-main);
+            background: var(--glass-border);
+        }
+        
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Main Display */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .time-display {
+            font-family: var(--font-mono);
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 700;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: baseline;
+            transition: all 0.2s ease;
+        }
+
+        .time-ms {
+            font-size: 0.5em;
+            color: var(--text-muted);
+            margin-left: 5px;
+        }
+
+        .current-clock {
+            position: absolute;
+            top: 1rem;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            font-size: calc(1.1rem * var(--ui-scale));
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            outline: none;
+            transition: all calc(0.2s / var(--animation-speed)) ease;
+            min-width: 120px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn.primary {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .btn.primary:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .btn.danger:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn.success {
+            border-color: var(--success);
+            color: var(--success);
+        }
+        .btn.success:hover {
+            background: var(--success);
+            color: #fff;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple calc(0.6s / var(--animation-speed)) linear;
+            background-color: rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+        }
+        [data-theme="light"] .ripple {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes ripple {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* Bottom Section: Laps & Stats */
+        .bottom-section {
+            height: 40%;
+            display: flex;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .laps-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .laps-header {
+            display: grid;
+            grid-template-columns: 0.5fr 1fr 1fr;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .laps-list {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            scroll-behavior: smooth;
+        }
+        
+        .laps-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .laps-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .laps-list::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
+        .lap-item {
+            display: grid;
+            grid-template-columns: 0.5fr 1fr 1fr;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            transition: background calc(0.3s / var(--animation-speed));
+            animation: slideIn calc(0.3s / var(--animation-speed)) ease forwards;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lap-item:hover {
+            background: var(--glass-border);
+        }
+
+        .lap-item.fastest { color: var(--fastest); }
+        .lap-item.slowest { color: var(--slowest); }
+
+        .lap-index { color: var(--text-muted); }
+
+        .stats-container {
+            flex: 1;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .stat-box {
+            background: var(--glass-border);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .stats-actions {
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity calc(0.3s / var(--animation-speed)) ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--bg2);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform calc(0.3s / var(--animation-speed)) ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .setting-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--text-muted);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 120px;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px; width: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px;
+            cursor: pointer;
+            background: var(--glass-border);
+            border-radius: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .bottom-section { flex-direction: column; height: 50%; }
+            .laps-container { border-right: none; border-bottom: 1px solid var(--glass-border); flex: 1.5; }
+            .stats-container { flex: 1; }
+            .time-display { font-size: clamp(2.5rem, 10vw, 4.5rem); }
+            .app-container { height: 100vh; height: 100dvh; width: 100%; border-radius: 0; border: none; }
+        }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .fullscreen-hide { opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div style="position: absolute; top: 15px; width: 100%; text-align: center; color: var(--text-muted); font-size: 0.9rem; z-index: 10; letter-spacing: 1px;">
+        This website is made by Naitik Jain.
+    </div>
+
+    <!-- Background Canvas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Main Application -->
+    <div class="app-container" id="appContainer">
+        
+        <!-- Header -->
+        <header id="appHeader">
+            <div class="status-container">
+                <div class="status-dot" id="statusDot"></div>
+                <div class="status-text" id="statusText">READY</div>
+            </div>
+            <div class="header-controls">
+                <button class="icon-btn" id="btnSound" aria-label="Toggle Sound" title="Toggle Sound">
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                </button>
+                <button class="icon-btn" id="btnTheme" aria-label="Toggle Theme" title="Toggle Theme">
+                    <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+                </button>
+                <button class="icon-btn" id="btnFullscreen" aria-label="Fullscreen" title="Fullscreen">
+                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                </button>
+                <button class="icon-btn" id="btnSettings" aria-label="Settings" title="Settings">
+                    <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Stopwatch Area -->
+        <main id="mainArea">
+            <div class="current-clock" id="currentClock">00:00:00</div>
+            <div class="time-display" id="timeDisplay">
+                <span id="timeMain">00:00:00</span><span class="time-ms" id="timeMs">.000</span>
+            </div>
+            
+            <div class="controls" id="mainControls">
+                <button class="btn primary" id="btnStartPause">Start</button>
+                <button class="btn" id="btnLapReset" disabled>Lap</button>
+                <button class="btn danger hidden" id="btnStop">Stop</button>
+            </div>
+        </main>
+
+        <!-- Bottom Section: Laps & Statistics -->
+        <div class="bottom-section" id="bottomSection">
+            <section class="laps-container">
+                <div class="laps-header">
+                    <span>Lap</span>
+                    <span>Lap Time</span>
+                    <span>Total Time</span>
+                </div>
+                <ul class="laps-list" id="lapsList">
+                    <!-- Dynamic Laps -->
+                </ul>
+            </section>
+            
+            <section class="stats-container">
+                <div class="stat-box">
+                    <span class="stat-label">Total Laps</span>
+                    <span class="stat-value" id="statTotalLaps">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Fastest Lap</span>
+                    <span class="stat-value fastest" id="statFastest">--:--:--.---</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Slowest Lap</span>
+                    <span class="stat-value slowest" id="statSlowest">--:--:--.---</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Average Lap</span>
+                    <span class="stat-value" id="statAverage">--:--:--.---</span>
+                </div>
+                
+                <div class="stats-actions">
+                    <button class="btn" id="btnClearLaps" style="min-width:0; padding:0.5rem; font-size:0.9rem;">Clear</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Settings</h2>
+                <button class="icon-btn" id="btnCloseSettings">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <span>Show Milliseconds</span>
+                    <label class="switch">
+                        <input type="checkbox" id="setMs" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <span>24 Hour Clock</span>
+                    <label class="switch">
+                        <input type="checkbox" id="set24h" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <span>Auto Save</span>
+                    <label class="switch">
+                        <input type="checkbox" id="setAutoSave" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <span>UI Scale</span>
+                    <input type="range" id="setUiScale" min="0.8" max="1.3" step="0.1" value="1">
+                </div>
+                <div class="setting-group">
+                    <span>Animation Speed</span>
+                    <input type="range" id="setAnimSpeed" min="0.5" max="2" step="0.5" value="1">
+                </div>
+                <button class="btn danger" id="btnResetSettings" style="width: 100%; margin-top: 1rem;">Reset Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * PROFESSIONAL STOPWATCH APP
+         * Single File Architecture
+         * No External Dependencies
+         */
+
+        // --- DYNAMIC PWA SERVICE WORKER ---
+        const swCode = `
+            const CACHE_NAME = 'stopwatch-v1';
+            self.addEventListener('install', e => { self.skipWaiting(); });
+            self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+            self.addEventListener('fetch', e => {
+                e.respondWith(fetch(e.request).catch(() => new Response('Offline Mode Active', { status: 200 })));
+            });
+        `;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(swUrl).catch(console.error);
+        }
+
+        // --- DYNAMIC MANIFEST ---
+        const manifest = {
+            name: "Professional Stopwatch",
+            short_name: "Stopwatch",
+            display: "standalone",
+            background_color: "#0f172a",
+            theme_color: "#0f172a",
+            icons: [{
+                src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%233b82f6'/%3E%3Ccircle cx='50' cy='50' r='35' fill='%230f172a'/%3E%3Cpath d='M50 25v25l15 15' stroke='%23f8fafc' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E",
+                sizes: "192x192",
+                type: "image/svg+xml",
+                purpose: "any maskable"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const linkManifest = document.createElement('link');
+        linkManifest.rel = 'manifest';
+        linkManifest.href = manifestUrl;
+        document.head.appendChild(linkManifest);
+
+        // --- UTILITIES ---
+        class Utils {
+            static formatTime(timeInMs, showMs = true) {
+                const date = new Date(timeInMs);
+                const h = String(Math.floor(timeInMs / 3600000)).padStart(2, '0');
+                const m = String(date.getUTCMinutes()).padStart(2, '0');
+                const s = String(date.getUTCSeconds()).padStart(2, '0');
+                const ms = String(date.getUTCMilliseconds()).padStart(3, '0');
+                return showMs ? { main: `${h}:${m}:${s}`, ms: `.${ms}` } : { main: `${h}:${m}:${s}`, ms: `` };
+            }
+
+            static formatCurrentTime(is24h) {
+                const now = new Date();
+                let h = now.getHours();
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                if (!is24h) {
+                    h = h % 12;
+                    h = h ? h : 12;
+                }
+                const hs = String(h).padStart(2, '0');
+                return is24h ? `${hs}:${m}:${s}` : `${hs}:${m}:${s} ${ampm}`;
+            }
+
+            static downloadFile(filename, content, type) {
+                const blob = new Blob([content], { type });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+            
+            static triggerRipple(e, button) {
+                const rect = button.getBoundingClientRect();
+                const x = (e.clientX || (e.touches && e.touches[0].clientX) || rect.left + rect.width/2) - rect.left;
+                const y = (e.clientY || (e.touches && e.touches[0].clientY) || rect.top + rect.height/2) - rect.top;
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                button.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            }
+            
+            static vibrate(pattern = 50) {
+                if (navigator.vibrate) navigator.vibrate(pattern);
+            }
+        }
+
+        // --- AUDIO SYSTEM ---
+        class AudioSystem {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+                this.icons = {
+                    on: '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+                    off: '<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>'
+                };
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if(AudioContext) this.ctx = new AudioContext();
+                }
+            }
+
+            playClick() {
+                if (!this.enabled || !this.ctx) return;
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.05);
+                
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                if(this.enabled) this.init();
+                return this.enabled;
+            }
+        }
+
+        // --- CANVAS BACKGROUND ---
+        class CanvasBackground {
+            constructor() {
+                this.canvas = document.getElementById('bgCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.initParticles();
+            }
+
+            initParticles() {
+                this.particles = [];
+                const numParticles = Math.min(window.innerWidth / 20, 50);
+                for (let i = 0; i < numParticles; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        radius: Math.random() * 4 + 1,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        alpha: Math.random() * 0.5 + 0.1
+                    });
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                this.ctx.fillStyle = isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(37, 99, 235, 0.1)';
+
+                this.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0 || p.x > this.canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > this.canvas.height) p.vy *= -1;
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // --- STORAGE & SETTINGS ---
+        class Storage {
+            constructor() {
+                this.defaultSettings = {
+                    showMs: true,
+                    is24h: true,
+                    autoSave: true,
+                    uiScale: 1,
+                    animSpeed: 1,
+                    theme: 'dark',
+                    sound: true
+                };
+            }
+
+            getSettings() {
+                try {
+                    return { ...this.defaultSettings, ...JSON.parse(localStorage.getItem('sw_settings') || '{}') };
+                } catch { return this.defaultSettings; }
+            }
+
+            saveSettings(settings) {
+                localStorage.setItem('sw_settings', JSON.stringify(settings));
+            }
+
+            getState() {
+                try {
+                    return JSON.parse(localStorage.getItem('sw_state'));
+                } catch { return null; }
+            }
+
+            saveState(state) {
+                localStorage.setItem('sw_state', JSON.stringify(state));
+            }
+
+            clearState() {
+                localStorage.removeItem('sw_state');
+            }
+        }
+
+        // --- CORE STOPWATCH APP ---
+        class App {
+            constructor() {
+                this.storage = new Storage();
+                this.audio = new AudioSystem();
+                this.canvasBg = new CanvasBackground();
+                
+                this.settings = this.storage.getSettings();
+                this.state = {
+                    status: 'READY', // READY, RUNNING, PAUSED, STOPPED
+                    startTime: 0,
+                    elapsedTime: 0,
+                    laps: [] // { id, lapTime, totalTime }
+                };
+
+                this.rafId = null;
+                this.lastTick = 0;
+                this.wakeLock = null;
+                this.hideControlsTimeout = null;
+
+                this.initDOM();
+                this.applySettings();
+                this.bindEvents();
+                this.restoreState();
+
+                // Current time clock loop
+                setInterval(() => this.updateClock(), 1000);
+                this.updateClock();
+            }
+
+            initDOM() {
+                this.els = {
+                    container: document.getElementById('appContainer'),
+                    header: document.getElementById('appHeader'),
+                    statusText: document.getElementById('statusText'),
+                    statusDot: document.getElementById('statusDot'),
+                    timeMain: document.getElementById('timeMain'),
+                    timeMs: document.getElementById('timeMs'),
+                    currentClock: document.getElementById('currentClock'),
+                    
+                    btnStartPause: document.getElementById('btnStartPause'),
+                    btnLapReset: document.getElementById('btnLapReset'),
+                    btnStop: document.getElementById('btnStop'),
+                    
+                    lapsList: document.getElementById('lapsList'),
+                    
+                    statTotalLaps: document.getElementById('statTotalLaps'),
+                    statFastest: document.getElementById('statFastest'),
+                    statSlowest: document.getElementById('statSlowest'),
+                    statAverage: document.getElementById('statAverage'),
+                    
+                    btnTheme: document.getElementById('btnTheme'),
+                    btnSound: document.getElementById('btnSound'),
+                    btnFullscreen: document.getElementById('btnFullscreen'),
+                    btnSettings: document.getElementById('btnSettings'),
+                    
+                    modalSettings: document.getElementById('settingsModal'),
+                    btnCloseSettings: document.getElementById('btnCloseSettings'),
+                    btnResetSettings: document.getElementById('btnResetSettings'),
+                    
+                    btnClearLaps: document.getElementById('btnClearLaps'),
+                    
+                    inpMs: document.getElementById('setMs'),
+                    inp24h: document.getElementById('set24h'),
+                    inpAutoSave: document.getElementById('setAutoSave'),
+                    inpUiScale: document.getElementById('setUiScale'),
+                    inpAnimSpeed: document.getElementById('setAnimSpeed')
+                };
+            }
+
+            applySettings() {
+                document.documentElement.setAttribute('data-theme', this.settings.theme);
+                document.documentElement.style.setProperty('--ui-scale', this.settings.uiScale);
+                document.documentElement.style.setProperty('--animation-speed', this.settings.animSpeed);
+                
+                this.audio.enabled = this.settings.sound;
+                this.els.btnSound.innerHTML = this.settings.sound ? this.audio.icons.on : this.audio.icons.off;
+                
+                this.els.timeMs.style.display = this.settings.showMs ? 'inline' : 'none';
+                
+                this.els.inpMs.checked = this.settings.showMs;
+                this.els.inp24h.checked = this.settings.is24h;
+                this.els.inpAutoSave.checked = this.settings.autoSave;
+                this.els.inpUiScale.value = this.settings.uiScale;
+                this.els.inpAnimSpeed.value = this.settings.animSpeed;
+            }
+
+            saveSettings() {
+                this.storage.saveSettings(this.settings);
+                this.applySettings();
+                this.updateDisplay();
+            }
+
+            bindEvents() {
+                // Main Controls
+                this.els.btnStartPause.addEventListener('click', (e) => this.handleStartPause(e));
+                this.els.btnLapReset.addEventListener('click', (e) => this.handleLapReset(e));
+                this.els.btnStop.addEventListener('click', (e) => this.handleStop(e));
+
+                // Header Controls
+                this.els.btnTheme.addEventListener('click', () => this.toggleTheme());
+                this.els.btnSound.addEventListener('click', () => {
+                    this.settings.sound = this.audio.toggle();
+                    this.saveSettings();
+                });
+                this.els.btnFullscreen.addEventListener('click', () => this.toggleFullscreen());
+                this.els.btnSettings.addEventListener('click', () => this.els.modalSettings.classList.add('active'));
+                
+                // Modals Close
+                this.els.btnCloseSettings.addEventListener('click', () => this.els.modalSettings.classList.remove('active'));
+                
+                // Settings Inputs
+                this.els.inpMs.addEventListener('change', e => { this.settings.showMs = e.target.checked; this.saveSettings(); });
+                this.els.inp24h.addEventListener('change', e => { this.settings.is24h = e.target.checked; this.saveSettings(); });
+                this.els.inpAutoSave.addEventListener('change', e => { this.settings.autoSave = e.target.checked; this.saveSettings(); });
+                this.els.inpUiScale.addEventListener('input', e => { this.settings.uiScale = parseFloat(e.target.value); this.saveSettings(); });
+                this.els.inpAnimSpeed.addEventListener('input', e => { this.settings.animSpeed = parseFloat(e.target.value); this.saveSettings(); });
+                this.els.btnResetSettings.addEventListener('click', () => {
+                    this.settings = { ...this.storage.defaultSettings };
+                    this.saveSettings();
+                });
+
+                // Laps
+                this.els.btnClearLaps.addEventListener('click', () => this.clearLaps());
+
+                // Keyboard Shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                    if (e.code === 'Space') { e.preventDefault(); this.handleStartPause(); }
+                    if (e.code === 'KeyR') { this.handleLapReset(null, true); }
+                    if (e.code === 'KeyL') { this.handleLapReset(null, false); }
+                    if (e.code === 'Escape') { 
+                        if(this.els.modalSettings.classList.contains('active')) this.els.modalSettings.classList.remove('active');
+                        else this.handleStop();
+                    }
+                });
+
+                // Fullscreen Auto-hide controls
+                document.addEventListener('mousemove', () => {
+                    if (document.fullscreenElement) {
+                        this.els.header.classList.remove('fullscreen-hide');
+                        this.els.container.style.cursor = 'default';
+                        clearTimeout(this.hideControlsTimeout);
+                        this.hideControlsTimeout = setTimeout(() => {
+                            if(this.state.status === 'RUNNING') {
+                                this.els.header.classList.add('fullscreen-hide');
+                                this.els.container.style.cursor = 'none';
+                            }
+                        }, 3000);
+                    }
+                });
+
+                // Auto Save before unload
+                window.addEventListener('beforeunload', () => {
+                    if (this.settings.autoSave) this.saveState();
+                    else this.storage.clearState();
+                });
+            }
+
+            // --- STATE MANAGEMENT ---
+            
+            restoreState() {
+                if (!this.settings.autoSave) return;
+                const saved = this.storage.getState();
+                if (saved) {
+                    this.state = saved;
+                    if (this.state.status === 'RUNNING') {
+                        // Adjust elapsed time based on time passed since last save
+                        const now = Date.now();
+                        this.state.startTime = now - this.state.elapsedTime;
+                        this.startRaf();
+                        this.requestWakeLock();
+                    }
+                    this.renderAllLaps();
+                    this.updateUIState();
+                    this.updateDisplay();
+                }
+            }
+
+            saveState() {
+                this.storage.saveState(this.state);
+            }
+
+            // --- STOPWATCH LOGIC ---
+
+            handleStartPause(e = null) {
+                if (e) { Utils.triggerRipple(e, this.els.btnStartPause); Utils.vibrate(50); }
+                this.audio.init();
+                this.audio.playClick();
+
+                if (this.state.status === 'READY' || this.state.status === 'PAUSED' || this.state.status === 'STOPPED') {
+                    // START / RESUME
+                    this.state.status = 'RUNNING';
+                    this.state.startTime = performance.now() - this.state.elapsedTime;
+                    this.lastTick = performance.now();
+                    this.startRaf();
+                    this.requestWakeLock();
+                } else {
+                    // PAUSE
+                    this.state.status = 'PAUSED';
+                    cancelAnimationFrame(this.rafId);
+                    this.updateDisplay(); // Final update
+                    if (this.wakeLock) this.wakeLock.release();
+                }
+                this.updateUIState();
+                if(this.settings.autoSave) this.saveState();
+            }
+
+            handleLapReset(e = null, forceReset = false) {
+                if (e) { Utils.triggerRipple(e, this.els.btnLapReset); Utils.vibrate(); }
+                this.audio.playClick();
+
+                if ((this.state.status === 'PAUSED' || this.state.status === 'STOPPED' || forceReset) && this.state.status !== 'READY') {
+                    // RESET
+                    this.state.status = 'READY';
+                    this.state.elapsedTime = 0;
+                    this.state.laps = [];
+                    cancelAnimationFrame(this.rafId);
+                    this.els.lapsList.innerHTML = '';
+                    this.updateUIState();
+                    this.updateDisplay();
+                    this.updateStats();
+                    if(this.settings.autoSave) this.storage.clearState();
+                } else if (this.state.status === 'RUNNING' && !forceReset) {
+                    // LAP
+                    this.addLap();
+                }
+            }
+
+            handleStop(e = null) {
+                if (e) { Utils.triggerRipple(e, this.els.btnStop); Utils.vibrate(); }
+                this.audio.playClick();
+
+                if (this.state.status === 'RUNNING' || this.state.status === 'PAUSED') {
+                    this.state.status = 'STOPPED';
+                    cancelAnimationFrame(this.rafId);
+                    this.updateDisplay();
+                    this.updateUIState();
+                    if (this.wakeLock) this.wakeLock.release();
+                    if(this.settings.autoSave) this.saveState();
+                }
+            }
+
+            addLap() {
+                const prevTotal = this.state.laps.length > 0 ? this.state.laps[0].totalTime : 0;
+                const lapTime = this.state.elapsedTime - prevTotal;
+                
+                const lap = {
+                    id: this.state.laps.length + 1,
+                    lapTime: lapTime,
+                    totalTime: this.state.elapsedTime
+                };
+                
+                this.state.laps.unshift(lap);
+                this.renderLap(lap);
+                this.updateStats();
+                if(this.settings.autoSave) this.saveState();
+            }
+
+            clearLaps() {
+                this.audio.playClick();
+                this.state.laps = [];
+                this.els.lapsList.innerHTML = '';
+                this.updateStats();
+                if(this.settings.autoSave) this.saveState();
+            }
+
+            // --- UPDATE LOOP ---
+
+            startRaf() {
+                cancelAnimationFrame(this.rafId);
+                const loop = (timestamp) => {
+                    this.state.elapsedTime = timestamp - this.state.startTime;
+                    this.updateDisplay();
+                    this.rafId = requestAnimationFrame(loop);
+                };
+                this.rafId = requestAnimationFrame(loop);
+            }
+
+            updateDisplay() {
+                const time = Utils.formatTime(this.state.elapsedTime, this.settings.showMs);
+                this.els.timeMain.textContent = time.main;
+                this.els.timeMs.textContent = time.ms;
+            }
+
+            updateClock() {
+                this.els.currentClock.textContent = Utils.formatCurrentTime(this.settings.is24h);
+            }
+
+            // --- UI MANAGEMENT ---
+
+            updateUIState() {
+                const btnSp = this.els.btnStartPause;
+                const btnLr = this.els.btnLapReset;
+                const btnSt = this.els.btnStop;
+                const stText = this.els.statusText;
+                const stDot = this.els.statusDot;
+
+                btnSp.classList.remove('primary', 'warning', 'success');
+                btnLr.classList.remove('danger');
+
+                switch (this.state.status) {
+                    case 'READY':
+                        stText.textContent = 'READY';
+                        stDot.style.background = 'var(--text-muted)';
+                        stDot.style.boxShadow = '0 0 10px var(--text-muted)';
+                        btnSp.textContent = 'Start';
+                        btnSp.className = 'btn primary';
+                        btnLr.textContent = 'Lap';
+                        btnLr.disabled = true;
+                        btnSt.classList.add('hidden');
+                        break;
+                    case 'RUNNING':
+                        stText.textContent = 'RUNNING';
+                        stDot.style.background = 'var(--success)';
+                        stDot.style.boxShadow = '0 0 15px var(--success)';
+                        btnSp.textContent = 'Pause';
+                        btnSp.className = 'btn warning';
+                        btnLr.textContent = 'Lap';
+                        btnLr.disabled = false;
+                        btnSt.classList.remove('hidden');
+                        break;
+                    case 'PAUSED':
+                        stText.textContent = 'PAUSED';
+                        stDot.style.background = 'var(--warning)';
+                        stDot.style.boxShadow = '0 0 15px var(--warning)';
+                        btnSp.textContent = 'Resume';
+                        btnSp.className = 'btn success';
+                        btnLr.textContent = 'Reset';
+                        btnLr.disabled = false;
+                        btnSt.classList.remove('hidden');
+                        break;
+                    case 'STOPPED':
+                        stText.textContent = 'STOPPED';
+                        stDot.style.background = 'var(--danger)';
+                        stDot.style.boxShadow = '0 0 15px var(--danger)';
+                        btnSp.textContent = 'Start';
+                        btnSp.className = 'btn primary';
+                        btnLr.textContent = 'Reset';
+                        btnLr.disabled = false;
+                        btnSt.classList.add('hidden');
+                        break;
+                }
+            }
+
+            renderLap(lap) {
+                const li = document.createElement('li');
+                li.className = 'lap-item';
+                li.id = `lap-${lap.id}`;
+                
+                const lapTimeStr = Utils.formatTime(lap.lapTime, true);
+                const totalTimeStr = Utils.formatTime(lap.totalTime, true);
+
+                li.innerHTML = `
+                    <span class="lap-index">${String(lap.id).padStart(2, '0')}</span>
+                    <span>${lapTimeStr.main}${lapTimeStr.ms}</span>
+                    <span>${totalTimeStr.main}${totalTimeStr.ms}</span>
+                `;
+                this.els.lapsList.prepend(li);
+            }
+
+            renderAllLaps() {
+                this.els.lapsList.innerHTML = '';
+                [...this.state.laps].reverse().forEach(lap => this.renderLap(lap));
+                this.updateStats();
+            }
+
+            updateStats() {
+                const numLaps = this.state.laps.length;
+                this.els.statTotalLaps.textContent = numLaps;
+
+                if (numLaps === 0) {
+                    this.els.statFastest.textContent = '--:--:--.---';
+                    this.els.statSlowest.textContent = '--:--:--.---';
+                    this.els.statAverage.textContent = '--:--:--.---';
+                    return;
+                }
+
+                let fastest = this.state.laps[0];
+                let slowest = this.state.laps[0];
+                let totalLapTime = 0;
+
+                this.state.laps.forEach(lap => {
+                    if (lap.lapTime < fastest.lapTime) fastest = lap;
+                    if (lap.lapTime > slowest.lapTime) slowest = lap;
+                    totalLapTime += lap.lapTime;
+                });
+
+                const avg = totalLapTime / numLaps;
+
+                const fmt = (t) => {
+                    const res = Utils.formatTime(t, true);
+                    return `${res.main}${res.ms}`;
+                };
+
+                this.els.statFastest.textContent = fmt(fastest.lapTime);
+                this.els.statSlowest.textContent = fmt(slowest.lapTime);
+                this.els.statAverage.textContent = fmt(avg);
+
+                // Highlight UI Laps
+                document.querySelectorAll('.lap-item').forEach(el => el.classList.remove('fastest', 'slowest'));
+                if (numLaps > 1) {
+                    document.getElementById(`lap-${fastest.id}`)?.classList.add('fastest');
+                    document.getElementById(`lap-${slowest.id}`)?.classList.add('slowest');
+                }
+            }
+
+            // --- FEATURES ---
+
+            toggleTheme() {
+                this.audio.playClick();
+                this.settings.theme = this.settings.theme === 'dark' ? 'light' : 'dark';
+                this.saveSettings();
+            }
+
+            async toggleFullscreen() {
+                this.audio.playClick();
+                try {
+                    if (!document.fullscreenElement) {
+                        await document.documentElement.requestFullscreen();
+                    } else {
+                        await document.exitFullscreen();
+                        this.els.header.classList.remove('fullscreen-hide');
+                        this.els.container.style.cursor = 'default';
+                        clearTimeout(this.hideControlsTimeout);
+                    }
+                } catch (err) { console.warn('Fullscreen API error:', err); }
+            }
+
+            async requestWakeLock() {
+                if ('wakeLock' in navigator) {
+                    try {
+                        this.wakeLock = await navigator.wakeLock.request('screen');
+                    } catch (err) { console.warn('WakeLock error:', err); }
+                }
+            }
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            window.stopwatchApp = new App();
+        });
+
+    </script>
+</body>
+              </html>
