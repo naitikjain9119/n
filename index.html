@@ -20,8 +20,18 @@ body.light-mode{
 html{scroll-behavior:smooth;}
 body{background:var(--user-bg);color:var(--user-text);font-size:var(--user-fontsize,15px);min-height:100vh;transition:background .3s,color .3s;}
 
+/* ---- NEW: TOP SECTION (STICKY HEADER) ---- */
+.top-section {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--user-bg);
+  transition: background .3s;
+  padding-bottom: 5px;
+}
+
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;background:var(--user-topbar-bg);border-bottom:1px solid var(--user-border);padding:0 16px;backdrop-filter:blur(12px);transition:background .3s;}
+.topbar{background:var(--user-topbar-bg);border-bottom:1px solid var(--user-border);padding:0 16px;backdrop-filter:blur(12px);transition:background .3s;}
 .topbar-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:11px 0;flex-wrap:wrap;}
 .back-btn{background:transparent;border:1px solid var(--user-border);color:var(--user-accent3);padding:6px 13px;border-radius:10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap;font-weight:500;}
 .back-btn:hover{background:rgba(139,92,246,.15);border-color:var(--user-accent2);}
@@ -41,7 +51,7 @@ body{background:var(--user-bg);color:var(--user-text);font-size:var(--user-fonts
 .sort-chip.active{background:var(--user-accent);color:#fff;border-color:var(--user-accent);}
 .sort-chip:hover:not(.active){border-color:var(--user-accent2);color:var(--user-accent3);}
 
-/* ---- NEW: SEARCH BAR ---- */
+/* SEARCH BAR */
 .search-bar{max-width:720px;margin:0 auto;padding:8px 16px 4px;display:flex;align-items:center;gap:8px;}
 .search-wrap{flex:1;display:flex;align-items:center;gap:8px;background:var(--user-item-bg);border:1px solid var(--user-border);border-radius:12px;padding:8px 14px;transition:border .2s;}
 .search-wrap:focus-within{border-color:var(--user-accent2);}
@@ -65,6 +75,14 @@ body{background:var(--user-bg);color:var(--user-text);font-size:var(--user-fonts
 .list-item{background:var(--user-item-bg);border:1px solid var(--user-border);border-radius:var(--radius);padding:15px 16px;display:flex;align-items:center;gap:12px;transition:all .2s;animation:fadeIn .3s ease forwards;opacity:0;}
 @keyframes fadeIn{to{opacity:1;}}
 .list-item:hover{border-color:var(--user-accent2);background:var(--user-surface);box-shadow:0 4px 20px rgba(0,0,0,.15);}
+
+/* NEW: Highlight Searched Elements */
+.list-item.highlight-search {
+  border: 2px solid var(--user-text) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+  background: var(--user-surface);
+}
+
 .item-num{width:34px;height:34px;border-radius:9px;background:rgba(139,92,246,.1);border:1px solid var(--user-border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--user-accent3);flex-shrink:0;}
 .item-name{flex:1;font-size:15px;font-weight:600;color:var(--user-text);line-height:1.3;}
 .item-btns{display:flex;align-items:center;gap:7px;flex-shrink:0;}
@@ -75,7 +93,7 @@ body{background:var(--user-bg);color:var(--user-text);font-size:var(--user-fonts
 .btn-more{padding:6px 16px;background:transparent;border:1.5px solid var(--user-accent2);border-radius:9px;color:var(--user-accent2);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;}
 .btn-more:hover{background:rgba(139,92,246,.15);}
 
-/* ---- NEW: SEARCH RESULTS ---- */
+/* SEARCH RESULTS */
 #userSR{max-width:720px;margin:0 auto;padding:0 16px 48px;display:none;flex-direction:column;gap:9px;}
 #userSR.open{display:flex;}
 .sr-header{font-size:12px;color:var(--user-text-muted);padding:2px 0 4px;}
@@ -118,48 +136,51 @@ body{background:var(--user-bg);color:var(--user-text);font-size:var(--user-fonts
 </head>
 <body>
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="topbar-inner">
-    <button class="back-btn" id="backBtn" onclick="goBack()" style="display:none">← Back</button>
-    <div class="breadcrumb" id="breadcrumb">
-      <span class="bc-home" onclick="goToRoot()">🏠 Home</span>
+<!-- STICKY TOP SECTION -->
+<div class="top-section">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <button class="back-btn" id="backBtn" onclick="goBack()" style="display:none">← Back</button>
+      <div class="breadcrumb" id="breadcrumb">
+        <span class="bc-home" onclick="goToRoot()">🏠 Home</span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️ Light</button>
     </div>
-    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️ Light</button>
+  </div>
+
+  <!-- SORT CHIPS -->
+  <div class="sort-row">
+    <button class="sort-chip" id="chipDef" onclick="setSort('default')">Default</button>
+    <button class="sort-chip" id="chipAZ" onclick="setSort('az')">A→Z</button>
+    <button class="sort-chip" id="chipZA" onclick="setSort('za')">Z→A</button>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="userSearch" placeholder="Search by name or series number..." oninput="onUserSearchInput()" autocomplete="off"/>
+      <button class="search-clear" id="userSearchClear" onclick="clearUserSearch()">✕</button>
+    </div>
+    <div class="scope-btns">
+      <button class="scope-btn active" id="uScopeCurrent" onclick="setUserScope('current')">Current Page</button>
+      <button class="scope-btn" id="uScopeAll" onclick="setUserScope('all')">All</button>
+    </div>
+  </div>
+
+  <!-- PAGE HERO -->
+  <div class="page-hero" id="pageHero">
+    <h1>📋 Directory</h1>
   </div>
 </div>
 
-<!-- SORT CHIPS -->
-<div class="sort-row">
-  <button class="sort-chip" id="chipDef" onclick="setSort('default')">Default</button>
-  <button class="sort-chip" id="chipAZ" onclick="setSort('az')">A→Z</button>
-  <button class="sort-chip" id="chipZA" onclick="setSort('za')">Z→A</button>
-</div>
-
-<!-- NEW: SEARCH BAR -->
-<div class="search-bar">
-  <div class="search-wrap">
-    <span class="search-icon">🔍</span>
-    <input class="search-input" id="userSearch" placeholder="Search items by name..." oninput="onUserSearchInput()" autocomplete="off"/>
-    <button class="search-clear" id="userSearchClear" onclick="clearUserSearch()">✕</button>
-  </div>
-  <div class="scope-btns">
-    <button class="scope-btn active" id="uScopeCurrent" onclick="setUserScope('current')">Current Page</button>
-    <button class="scope-btn" id="uScopeAll" onclick="setUserScope('all')">All</button>
-  </div>
-</div>
-
-<!-- PAGE HERO -->
-<div class="page-hero" id="pageHero">
-  <h1>📋 Directory</h1>
-</div>
-
-<!-- MAIN LIST -->
+<!-- MAIN LIST (Scrollable) -->
 <div class="list-wrap" id="listWrap">
   <div class="loading-w"><div class="spinner"></div><p>Loading...</p></div>
 </div>
 
-<!-- NEW: SEARCH RESULTS -->
+<!-- SEARCH RESULTS (Scrollable) -->
 <div id="userSR"></div>
 
 <!-- DETAILS OVERLAY -->
@@ -213,6 +234,19 @@ loadHostSettings();
 // ---- STATE ----
 let curDirId='root', navStack=[], curItems=[], sortMode='default', unsub=null;
 let userSearchScope='current', userSearchTimer=null;
+let currentDisplayList = []; 
+let targetHighlightId = null; // New state to track globally searched item
+
+// ---- UPDATE DISPLAY LIST WITH ORIGINAL SERIES NUMBERS ----
+function updateDisplayList() {
+    currentDisplayList = [...curItems];
+    if(sortMode==='az') currentDisplayList.sort((a,b)=>a.name.localeCompare(b.name));
+    else if(sortMode==='za') currentDisplayList.sort((a,b)=>b.name.localeCompare(a.name));
+    
+    currentDisplayList.forEach((item, i) => {
+        item.displayNumber = i + 1;
+    });
+}
 
 // ---- LOAD DIR ----
 function loadDir(dirId){
@@ -229,6 +263,7 @@ function loadDir(dirId){
     curItems=[];
     if(snap.exists()) snap.forEach(ch=>{ const v={id:ch.key,...ch.val()}; if(!v.hidden) curItems.push(v); });
     curItems.sort((a,b)=>(a.order||0)-(b.order||0));
+    updateDisplayList();
     renderCurrentUserView();
   });
 }
@@ -243,7 +278,11 @@ function renderBreadcrumb(){
   });
   document.getElementById('breadcrumb').innerHTML=h;
 }
-window.jumpNav=function(idx){navStack=navStack.slice(0,idx+1);loadDir(navStack[idx].id);};
+window.jumpNav=function(idx){
+  targetHighlightId = null; // Remove highlight on manual nav
+  navStack=navStack.slice(0,idx+1);
+  loadDir(navStack[idx].id);
+};
 
 // ---- HERO ----
 function renderHero(){
@@ -260,7 +299,12 @@ function updateChips(){
   document.getElementById('chipAZ').classList.toggle('active',sortMode==='az');
   document.getElementById('chipZA').classList.toggle('active',sortMode==='za');
 }
-window.setSort=function(mode){sortMode=mode;updateChips();renderCurrentUserView();};
+window.setSort=function(mode){
+    sortMode=mode;
+    updateChips();
+    updateDisplayList();
+    renderCurrentUserView();
+};
 
 // ---- RENDER CURRENT VIEW ----
 function renderCurrentUserView(){
@@ -277,16 +321,22 @@ function renderCurrentUserView(){
 // ---- RENDER ITEMS ----
 function renderItems(overrideList){
   const wrap=document.getElementById('listWrap');
-  let list=overrideList||[...curItems];
-  if(!overrideList){
-    if(sortMode==='az') list.sort((a,b)=>a.name.localeCompare(b.name));
-    else if(sortMode==='za') list.sort((a,b)=>b.name.localeCompare(a.name));
-  }
+  let list = overrideList || currentDisplayList;
+  
   if(!list.length){wrap.innerHTML='<div class="empty-w"><div class="icon">📭</div><p>No items found.</p></div>';return;}
   wrap.innerHTML='';
+
+  // Check if there is an active local search
+  const q = document.getElementById('userSearch').value.trim();
+  const isCurrentSearchActive = q.length > 0 && userSearchScope === 'current';
+
   list.forEach((item,idx)=>{
     const el=document.createElement('div');
-    el.className='list-item';
+    
+    // Add highlight class if it matches the global search target OR if it's currently being searched locally
+    let isHighlighted = isCurrentSearchActive || item.id === targetHighlightId;
+    el.className='list-item' + (isHighlighted ? ' highlight-search' : '');
+    
     el.style.animationDelay=(idx*40)+'ms';
     let actionBtn='';
     if(item.actionType==='link'||item.actionType==='directory'){
@@ -294,18 +344,24 @@ function renderItems(overrideList){
     } else {
       actionBtn=`<button class="btn-more" onclick="handleMore('${item.id}','${ea(item.name)}')">More</button>`;
     }
+    
     el.innerHTML=`
-      <div class="item-num">${idx+1}</div>
+      <div class="item-num">${item.displayNumber}</div>
       <div class="item-name">${esc(item.name)}</div>
       <div class="item-btns">
         <button class="btn-details" onclick="showDet('${item.id}')">Details</button>
         ${actionBtn}
       </div>`;
     wrap.appendChild(el);
+
+    // Auto-scroll to the specific element if navigated from Global Search
+    if (item.id === targetHighlightId) {
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    }
   });
 }
 
-// ---- NEW: SEARCH ----
+// ---- SEARCH ----
 window.setUserScope=function(scope){
   userSearchScope=scope;
   document.getElementById('uScopeCurrent').classList.toggle('active',scope==='current');
@@ -315,6 +371,7 @@ window.setUserScope=function(scope){
 };
 
 window.onUserSearchInput=function(){
+  targetHighlightId = null; // Remove global highlight when starting a new search
   const q=document.getElementById('userSearch').value.trim();
   document.getElementById('userSearchClear').classList.toggle('show',q.length>0);
   clearTimeout(userSearchTimer);
@@ -322,7 +379,8 @@ window.onUserSearchInput=function(){
   userSearchTimer=setTimeout(()=>doUserSearch(q),300);
 };
 
-window.clearUserSearch=function(){
+window.clearUserSearch=function(keepHighlight = false){
+  if(!keepHighlight) targetHighlightId = null; // Clear highlight on normal clear
   document.getElementById('userSearch').value='';
   document.getElementById('userSearchClear').classList.remove('show');
   document.getElementById('userSR').classList.remove('open');
@@ -332,26 +390,42 @@ window.clearUserSearch=function(){
 
 async function doUserSearch(q){
   const qLow=q.toLowerCase();
+  const isNumber = /^\d+$/.test(q); 
+  
   const srEl=document.getElementById('userSR');
   const lwEl=document.getElementById('listWrap');
 
   if(userSearchScope==='current'){
-    // Filter current page only
     srEl.classList.remove('open');
     lwEl.style.display='';
-    let list=[...curItems];
-    if(sortMode==='az') list.sort((a,b)=>a.name.localeCompare(b.name));
-    else if(sortMode==='za') list.sort((a,b)=>b.name.localeCompare(a.name));
-    const filtered=list.filter(i=>i.name.toLowerCase().includes(qLow));
+    
+    let filtered = [];
+    if (isNumber) {
+        const num = parseInt(q, 10);
+        const exactMatch = currentDisplayList.find(i => i.displayNumber === num);
+        const nameMatches = currentDisplayList.filter(i => i.displayNumber !== num && i.name.toLowerCase().includes(qLow));
+        if (exactMatch) filtered.push(exactMatch);
+        filtered = filtered.concat(nameMatches);
+    } else {
+        filtered = currentDisplayList.filter(i => i.name.toLowerCase().includes(qLow));
+    }
     renderItems(filtered);
   } else {
-    // All scope — fetch from all directories
     lwEl.style.display='none';
     srEl.innerHTML='<div class="sr-spin"><div class="spinner"></div><p>Searching all pages...</p></div>';
     srEl.classList.add('open');
     try{
       const allItems=await fetchAllUserRecursive('root',[],'🏠 Home');
-      const filtered=allItems.filter(i=>i.name.toLowerCase().includes(qLow));
+      let filtered = [];
+      
+      if (isNumber) {
+          const num = parseInt(q, 10);
+          const exactMatches = allItems.filter(i => i.displayNumber === num);
+          const nameMatches = allItems.filter(i => i.displayNumber !== num && i.name.toLowerCase().includes(qLow));
+          filtered = exactMatches.concat(nameMatches);
+      } else {
+          filtered = allItems.filter(i => i.name.toLowerCase().includes(qLow));
+      }
       renderUserResults(srEl,filtered,q);
     }catch(err){
       srEl.innerHTML=`<div class="sr-empty">❌ Could not search. Check your connection.</div>`;
@@ -367,12 +441,18 @@ async function fetchAllUserRecursive(dirId,navPath,pathDisplay,depth){
     if(!snap.exists()) return results;
     const items=[];
     snap.forEach(ch=>{ items.push({id:ch.key,...ch.val()}); });
+    
+    items.sort((a,b)=>(a.order||0)-(b.order||0));
+    let validIndex = 1;
+    
     for(const item of items){
-      // Skip hidden items for user panel
       if(item.hidden) continue;
+      
+      item.displayNumber = validIndex++;
       results.push({
         id:item.id,name:item.name,actionType:item.actionType,
-        dirId,navPath:[...navPath],pathDisplay
+        dirId,navPath:[...navPath],pathDisplay,
+        displayNumber: item.displayNumber
       });
       if(item.actionType==='more'){
         const subNav=[...navPath,{id:item.id,name:item.name}];
@@ -394,14 +474,20 @@ function renderUserResults(srEl,results,q){
   results.forEach(r=>{
     const d=document.createElement('div');
     d.className='sr-item';
-    d.innerHTML=`<div class="sr-name">${esc(r.name)}</div><div class="sr-path">📍 ${esc(r.pathDisplay)}</div>`;
+    d.innerHTML=`
+        <div class="sr-name">
+            <span style="color:var(--user-accent3); font-weight:700; margin-right:6px;">#${r.displayNumber}</span>${esc(r.name)}
+        </div>
+        <div class="sr-path">📍 ${esc(r.pathDisplay)}</div>
+    `;
     d.onclick=()=>navigateToUserResult(r);
     srEl.appendChild(d);
   });
 }
 
 function navigateToUserResult(r){
-  clearUserSearch();
+  targetHighlightId = r.id; // Remember this specific element to highlight it
+  clearUserSearch(true);    // Clear search visually, but keep the targetHighlightId
   navStack=[...r.navPath];
   loadDir(r.dirId);
 }
@@ -437,17 +523,23 @@ window.handleGo=function(id){
 // ---- MORE ----
 window.handleMore=function(id,name){
   closeDet();
+  targetHighlightId = null; // Clear highlight when clicking more
   navStack.push({id,name});
   loadDir(id);
 };
 
 // ---- NAV ----
 window.goBack=function(){
+  targetHighlightId = null; // Clear highlight on Back button
   if(!navStack.length) return;
   navStack.pop();
   navStack.length===0?loadDir('root'):loadDir(navStack[navStack.length-1].id);
 };
-window.goToRoot=function(){navStack=[];loadDir('root');};
+window.goToRoot=function(){
+  targetHighlightId = null; // Clear highlight on Home button
+  navStack=[];
+  loadDir('root');
+};
 
 // ---- UTILS ----
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
