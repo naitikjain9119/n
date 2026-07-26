@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Arrow Puzzle - Tap Away Logic Game</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --panel-bg: rgba(30, 41, 59, 0.75);
+      --accent-teal: #14b8a6;
+      --accent-teal-glow: rgba(20, 184, 166, 0.4);
+      --accent-coral: #f43f5e;
+      --accent-gold: #f59e0b;
+      --arrow-bg: #334155;
+      --arrow-hover: #475569;
+      --arrow-icon: #f8fafc;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --radius: 16px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(20, 184, 166, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.05) 0%, transparent 40%);
+    }
+
+    /* App Layout Container */
+    .app-container {
+      width: 100%;
+      max-width: 520px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+      position: relative;
+    }
+
+    /* Top Bar Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      color: var(--accent-teal);
+    }
+
+    .logo-text {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 30%, var(--text-sub));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stats-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-box {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .lives-container {
+      display: flex;
+      gap: 3px;
+    }
+
+    .heart-icon {
+      width: 18px;
+      height: 18px;
+      color: var(--accent-coral);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .heart-icon.lost {
+      color: #475569;
+      transform: scale(0.8);
+    }
+
+    .level-badge {
+      background: rgba(20, 184, 166, 0.15);
+      color: var(--accent-teal);
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid rgba(20, 184, 166, 0.3);
+    }
+
+    /* Sub Actions Bar */
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding: 0 2px;
+    }
+
+    .icon-btn {
+      background: var(--panel-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Developer Credit Banner */
+    .developer-credit {
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent-teal);
+      background: rgba(20, 184, 166, 0.1);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(20, 184, 166, 0.2);
+      letter-spacing: 0.3px;
+    }
+
+    /* Game Arena & 10x10 Grid */
+    .game-arena {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 10px 0;
+      width: 100%;
+    }
+
+    .grid-board {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      gap: 3px;
+      width: 100%;
+      max-width: 460px;
+      aspect-ratio: 1 / 1;
+      padding: 8px;
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+      touch-action: none;
+    }
+
+    /* 10x10 Cell & Arrow Styling */
+    .grid-cell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .arrow-card {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, #38495e, #24303f);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      transition: transform 0.15s ease, background-color 0.2s;
+      z-index: 2;
+    }
+
+    .arrow-card:hover {
+      background: linear-gradient(145deg, #42556d, #2c3b4e);
+    }
+
+    .arrow-card svg {
+      width: 65%;
+      height: 65%;
+      fill: none;
+      stroke: var(--arrow-icon);
+      stroke-width: 2.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+    }
+
+    /* Direction Rotations */
+    .dir-U { transform: rotate(0deg); }
+    .dir-R { transform: rotate(90deg); }
+    .dir-D { transform: rotate(180deg); }
+    .dir-L { transform: rotate(270deg); }
+
+    /* Animations */
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-4px, 0); }
+      40% { transform: translate(4px, 0); }
+      60% { transform: translate(-3px, 0); }
+      80% { transform: translate(3px, 0); }
+    }
+
+    .shake-error {
+      animation: shake 0.35s ease-in-out;
+      background: linear-gradient(145deg, #e11d48, #9f1239) !important;
+    }
+
+    .hint-pulse {
+      animation: hintGlow 1.2s infinite alternate;
+      z-index: 5 !important;
+    }
+
+    @keyframes hintGlow {
+      0% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8), 0 2px 6px rgba(0,0,0,0.3);
+      }
+      100% {
+        box-shadow: 0 0 0 8px rgba(245, 158, 11, 0), 0 2px 6px rgba(0,0,0,0.3);
+      }
+    }
+
+    /* Fly-out Animations */
+    .fly-U { transform: translateY(-1200px) !important; opacity: 0; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s !important; }
+    .fly-D { transform: translateY(1200px) !important; opacity: 0; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s !important; }
+    .fly-L { transform: translateX(-1200px) !important; opacity: 0; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s !important; }
+    .fly-R { transform: translateX(1200px) !important; opacity: 0; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s !important; }
+
+    /* Bottom Footer Bar */
+    footer {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 600;
+      transition: color 0.2s;
+      position: relative;
+    }
+
+    .action-btn:hover, .action-btn:active {
+      color: var(--text-main);
+    }
+
+    .btn-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:active .btn-circle {
+      transform: scale(0.9);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .badge-count {
+      position: absolute;
+      top: -2px;
+      right: 2px;
+      background: var(--accent-gold);
+      color: #000;
+      font-size: 0.68rem;
+      font-weight: 800;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .credit-tagline {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+      opacity: 0.85;
+    }
+
+    /* Modals & Overlay */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .modal-body {
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--text-sub);
+    }
+
+    .modal-body h3 {
+      color: var(--accent-teal);
+      margin: 12px 0 6px 0;
+      font-size: 0.95rem;
+    }
+
+    .modal-body ul {
+      padding-left: 18px;
+      margin-bottom: 10px;
+    }
+
+    .modal-body li {
+      margin-bottom: 5px;
+    }
+
+    .cta-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: linear-gradient(135deg, var(--accent-teal), #0d9488);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+      transition: transform 0.2s;
+    }
+
+    .cta-btn:active {
+      transform: scale(0.98);
+    }
+
+    .status-modal {
+      text-align: center;
+    }
+
+    .status-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 12px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .win-icon {
+      background: rgba(20, 184, 166, 0.15);
+      color: var(--accent-teal);
+    }
+
+    .lose-icon {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--accent-coral);
+    }
+
+    .trophy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .trophy-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 10px 6px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .trophy-item.unlocked {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .trophy-item svg {
+      width: 24px;
+      height: 24px;
+      color: #64748b;
+    }
+
+    .trophy-item.unlocked svg {
+      color: var(--accent-gold);
+    }
+
+    .trophy-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Top Header Navigation -->
+    <header>
+      <div class="logo-group">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="logo-text">Arrow Puzzle</span>
+      </div>
+
+      <div class="stats-group">
+        <div class="stat-box">
+          <div class="lives-container" id="livesContainer">
+            <!-- Hearts -->
+          </div>
+        </div>
+        <div class="level-badge" id="levelBadge">10x10 GRID</div>
+      </div>
+    </header>
+
+    <!-- Sub Actions & Creator Credit -->
+    <div class="top-actions">
+      <button class="icon-btn" id="infoBtn" title="How to Play & Info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </button>
+
+      <div class="developer-credit">This website is made by Naitik jain</div>
+
+      <button class="icon-btn" id="dailyBtn" title="Daily Challenge & Trophies">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/>
+        </svg>
+      </button>
+
+      <button class="icon-btn" id="soundBtn" title="Toggle Audio">
+        <svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Main Game Board Arena (10x10 Grid Box) -->
+    <main class="game-arena">
+      <div class="grid-board" id="gridBoard">
+        <!-- Dynamic 10x10 Grid Cells -->
+      </div>
+    </main>
+
+    <!-- Bottom Navigation Controls -->
+    <footer>
+      <div class="footer-controls">
+        <button class="action-btn" id="restartBtn">
+          <div class="btn-circle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+          </div>
+          <span>Restart</span>
+        </button>
+
+        <button class="action-btn" id="hintBtn">
+          <div class="btn-circle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.55.59 2.8 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/>
+            </svg>
+          </div>
+          <span class="badge-count" id="hintBadge">3</span>
+          <span>Hint</span>
+        </button>
+
+        <button class="action-btn" id="modeBtn">
+          <div class="btn-circle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <span>Info</span>
+        </button>
+      </div>
+
+      <div class="credit-tagline">This website is made by Naitik jain</div>
+    </footer>
+  </div>
+
+  <!-- MODAL: Info & How to Play -->
+  <div class="modal-overlay" id="infoModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Arrow Puzzle</h2>
+        <button class="close-btn modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Tap away arrows to escape the maze. Train your brain with smart puzzle games!</strong></p>
+        <p>Arrow Puzzle is a relaxing logic game that turns simple taps into a rewarding challenge. Your goal is straightforward: find a free path, tap arrows in the right order, and enjoy as the maze slowly turns into a clear, empty board. Follow the arrows to escape the puzzle and find a soothing flow that keeps your mind engaged and relaxed.</p>
+        
+        <p style="margin-top: 8px;">Looking for a gentle workout for your brain without any pressure attached? This comforting arrow game lets you tap away the stress, gives you a focused break from the noise, and helps you train your logic and spatial thinking as you build a calming daily ritual. Each cleared board in the arrow game is a small mental reset—a satisfying win for your mind.</p>
+
+        <h3>How to Play Arrow Puzzle:</h3>
+        <ul>
+          <li>In this tap away puzzle game, your goal is to clear the grid—a maze of arrows all pointing in different directions.</li>
+          <li>Escape the arrow puzzle grid by finding a free path. An arrow moves only when its way ahead is clear and no other arrows are blocking its path. Take a moment to think first.</li>
+          <li>Tap arrows away one by one to help them leave the grid and open up more space for the others.</li>
+          <li>Avoid blocked arrows. If you tap an arrow whose path is blocked, you lose a life. Lives are limited on each level, but you can always rethink your plan and try again at your own pace.</li>
+          <li>If you get stuck, use helpful hints to highlight an arrow that can safely escape the grid.</li>
+          <li>Plan the order of your taps, help every arrow escape, and enjoy the moment when the last arrow leaves and everything falls into place.</li>
+        </ul>
+
+        <h3>Why You'll Love Arrow Puzzle:</h3>
+        <ul>
+          <li>✔ A minimalist arrow game with simple rules and deep strategy—easy to start, satisfying to master.</li>
+          <li>✔ Hundreds of handcrafted tap away style puzzles that grow in challenge as you play.</li>
+          <li>✔ Daily Challenges—play every day, complete monthly challenges, and collect unique trophies.</li>
+          <li>✔ Helpful hints when you need a small nudge to release an arrow and keep the flow going.</li>
+          <li>✔ No timer, no pressure—a relaxing escape and a true delight for your mind.</li>
+          <li>✔ Clean, calming visuals and smooth animations that keep the focus on puzzle-solving in this tap game.</li>
+        </ul>
+
+        <p style="margin-top: 12px; font-weight:700; color: var(--accent-teal); text-align: center;">
+          This website is made by Naitik jain
+        </p>
+
+        <button class="cta-btn modal-start-btn">Start Playing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Win Level -->
+  <div class="modal-overlay" id="winModal">
+    <div class="modal-card status-modal">
+      <div class="status-icon win-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h2 class="modal-title">10x10 Maze Cleared!</h2>
+      <p class="modal-body" style="margin-top: 6px;">A satisfying mental reset! All arrows escaped safely.</p>
+      <p style="font-size:0.75rem; color:var(--accent-teal); margin-top:8px;">This website is made by Naitik jain</p>
+      <button class="cta-btn" id="nextLevelBtn">Next Level</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Game Over -->
+  <div class="modal-overlay" id="loseModal">
+    <div class="modal-card status-modal">
+      <div class="status-icon lose-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h2 class="modal-title">Out of Lives!</h2>
+      <p class="modal-body" style="margin-top: 6px;">That path was blocked. Take a deep breath, rethink your plan, and try again.</p>
+      <button class="cta-btn" id="retryLevelBtn">Try Again</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Daily Challenges & Trophies -->
+  <div class="modal-overlay" id="dailyModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Daily Challenge & Trophies</h2>
+        <button class="close-btn modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Complete daily 10x10 challenges to collect unique trophies and keep your mind active!</p>
+        
+        <div class="trophy-grid" id="trophyGrid">
+          <div class="trophy-item unlocked">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+            <span class="trophy-name">First Escape</span>
+          </div>
+          <div class="trophy-item" id="trophy5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+            <span class="trophy-name">Zen Master</span>
+          </div>
+          <div class="trophy-item" id="trophy10">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+            <span class="trophy-name">10x10 Genius</span>
+          </div>
+        </div>
+
+        <button class="cta-btn" id="playDailyBtn">Play Today's Challenge</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* GAME STATE MANAGEMENT - STRICT 10x10 BOX GRID */
+    const GAME = {
+      level: 1,
+      lives: 3,
+      maxLives: 3,
+      hints: 3,
+      gridSize: 10, // Exact 10 by 10 box grid
+      grid: [],
+      activeArrows: 0,
+      soundEnabled: true,
+      audioCtx: null,
+      isAnimating: false,
+      isDaily: false
+    };
+
+    /* AUDIO SYNTHESIZER */
+    function initAudio() {
+      if (!GAME.audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) GAME.audioCtx = new AudioContext();
+      }
+    }
+
+    function playSound(type) {
+      if (!GAME.soundEnabled) return;
+      initAudio();
+      if (!GAME.audioCtx) return;
+
+      const ctx = GAME.audioCtx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+
+      if (type === 'pop') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'error') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.setValueAtTime(110, now + 0.08);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else if (type === 'hint') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'win') {
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((f, i) => {
+          const subOsc = ctx.createOscillator();
+          const subGain = ctx.createGain();
+          subOsc.connect(subGain);
+          subGain.connect(ctx.destination);
+          subOsc.frequency.setValueAtTime(f, now + i * 0.08);
+          subGain.gain.setValueAtTime(0.2, now + i * 0.08);
+          subGain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+          subOsc.start(now + i * 0.08);
+          subOsc.stop(now + i * 0.08 + 0.3);
+        });
+      }
+    }
+
+    /* DOM ELEMENTS */
+    const gridBoard = document.getElementById('gridBoard');
+    const livesContainer = document.getElementById('livesContainer');
+    const levelBadge = document.getElementById('levelBadge');
+    const hintBadge = document.getElementById('hintBadge');
+
+    const infoModal = document.getElementById('infoModal');
+    const winModal = document.getElementById('winModal');
+    const loseModal = document.getElementById('loseModal');
+    const dailyModal = document.getElementById('dailyModal');
+
+    /* GAME INITIALIZATION */
+    function initGame() {
+      updateHeaderUI();
+      loadLevel(GAME.level);
+    }
+
+    function updateHeaderUI() {
+      livesContainer.innerHTML = '';
+      for (let i = 0; i < GAME.maxLives; i++) {
+        const heart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        heart.setAttribute('class', `heart-icon ${i >= GAME.lives ? 'lost' : ''}`);
+        heart.setAttribute('viewBox', '0 0 24 24');
+        heart.setAttribute('fill', 'currentColor');
+        heart.innerHTML = `<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>`;
+        livesContainer.appendChild(heart);
+      }
+
+      levelBadge.textContent = GAME.isDaily ? 'DAILY 10x10' : `LVL ${GAME.level}`;
+      hintBadge.textContent = GAME.hints;
+
+      if (GAME.level >= 5) document.getElementById('trophy5')?.classList.add('unlocked');
+      if (GAME.level >= 10) document.getElementById('trophy10')?.classList.add('unlocked');
+    }
+
+    function loadLevel(lvlIndex) {
+      GAME.lives = GAME.maxLives;
+      GAME.isAnimating = false;
+      updateHeaderUI();
+
+      // Generate a 10x10 solvable puzzle grid
+      const levelData = generate10x10SolvableLevel(lvlIndex);
+      buildGrid(levelData);
+    }
+
+    /* SOLVABLE 10x10 PUZZLE GENERATOR */
+    function generate10x10SolvableLevel(seed) {
+      const size = 10; // Fixed 10x10 Box Grid
+      const arrowCount = Math.min(30 + Math.floor(seed * 2), 65);
+
+      let grid = Array(size).fill(null).map(() => Array(size).fill(null));
+      let arrows = [];
+      const dirs = ['U', 'R', 'D', 'L'];
+
+      let placed = 0;
+      let attempts = 0;
+
+      // Backward placement guarantees a 100% solvable puzzle
+      while (placed < arrowCount && attempts < 800) {
+        attempts++;
+        let r = Math.floor(Math.random() * size);
+        let c = Math.floor(Math.random() * size);
+
+        if (grid[r][c] !== null) continue;
+
+        let dir = dirs[Math.floor(Math.random() * 4)];
+
+        if (canSlideIntoPlace(grid, r, c, dir, size)) {
+          grid[r][c] = dir;
+          arrows.push({ r, c, dir });
+          placed++;
+        }
+      }
+
+      return { size: 10, arrows };
+    }
+
+    function canSlideIntoPlace(grid, r, c, dir, size) {
+      let currR = r;
+      let currC = c;
+
+      const dr = dir === 'U' ? -1 : dir === 'D' ? 1 : 0;
+      const dc = dir === 'L' ? -1 : dir === 'R' ? 1 : 0;
+
+      currR += dr;
+      currC += dc;
+
+      while (currR >= 0 && currR < size && currC >= 0 && currC < size) {
+        if (grid[currR][currC] !== null) {
+          return false;
+        }
+        currR += dr;
+        currC += dc;
+      }
+      return true;
+    }
+
+    /* BUILD 10x10 GRID BOARD */
+    function buildGrid(data) {
+      gridBoard.innerHTML = '';
+      GAME.gridSize = 10;
+      GAME.grid = Array(10).fill(null).map(() => Array(10).fill(null));
+      GAME.activeArrows = data.arrows.length;
+
+      // Build 100 cells for 10x10
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          gridBoard.appendChild(cell);
+        }
+      }
+
+      // Populate 10x10 Arrows
+      data.arrows.forEach(item => {
+        const cell = gridBoard.querySelector(`[data-row="${item.r}"][data-col="${item.c}"]`);
+        if (!cell) return;
+
+        const arrowCard = document.createElement('div');
+        arrowCard.className = `arrow-card dir-${item.dir}`;
+        arrowCard.dataset.row = item.r;
+        arrowCard.dataset.col = item.c;
+        arrowCard.dataset.dir = item.dir;
+
+        arrowCard.innerHTML = `
+          <svg viewBox="0 0 24 24">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+        `;
+
+        arrowCard.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          handleArrowTap(item.r, item.c, item.dir, arrowCard);
+        });
+
+        cell.appendChild(arrowCard);
+        GAME.grid[item.r][item.c] = { dir: item.dir, el: arrowCard };
+      });
+    }
+
+    /* ARROW TAP logic */
+    function handleArrowTap(r, c, dir, element) {
+      if (GAME.isAnimating || GAME.lives <= 0) return;
+
+      document.querySelectorAll('.hint-pulse').forEach(el => el.classList.remove('hint-pulse'));
+
+      const blocked = isPathBlocked(r, c, dir);
+
+      if (!blocked) {
+        GAME.isAnimating = true;
+        playSound('pop');
+
+        element.classList.add(`fly-${dir}`);
+        GAME.grid[r][c] = null;
+        GAME.activeArrows--;
+
+        setTimeout(() => {
+          element.remove();
+          GAME.isAnimating = false;
+
+          if (GAME.activeArrows === 0) {
+            handleLevelWin();
+          }
+        }, 450);
+
+      } else {
+        playSound('error');
+        element.classList.add('shake-error');
+        GAME.lives--;
+        updateHeaderUI();
+
+        setTimeout(() => {
+          element.classList.remove('shake-error');
+        }, 350);
+
+        if (GAME.lives <= 0) {
+          setTimeout(() => {
+            loseModal.classList.add('active');
+          }, 450);
+        }
+      }
+    }
+
+    /* RAYCAST COLLISION CHECK */
+    function isPathBlocked(r, c, dir) {
+      let dr = dir === 'U' ? -1 : dir === 'D' ? 1 : 0;
+      let dc = dir === 'L' ? -1 : dir === 'R' ? 1 : 0;
+
+      let currR = r + dr;
+      let currC = c + dc;
+
+      while (currR >= 0 && currR < 10 && currC >= 0 && currC < 10) {
+        if (GAME.grid[currR][currC] !== null) {
+          return true;
+        }
+        currR += dr;
+        currC += dc;
+      }
+
+      return false;
+    }
+
+    /* HINT CALCULATOR */
+    function findFreeArrow() {
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          const item = GAME.grid[r][c];
+          if (item !== null) {
+            if (!isPathBlocked(r, c, item.dir)) {
+              return item.el;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function useHint() {
+      if (GAME.hints <= 0) return;
+      const freeEl = findFreeArrow();
+      if (freeEl) {
+        GAME.hints--;
+        updateHeaderUI();
+        playSound('hint');
+        freeEl.classList.add('hint-pulse');
+      }
+    }
+
+    function handleLevelWin() {
+      playSound('win');
+      setTimeout(() => {
+        winModal.classList.add('active');
+      }, 300);
+    }
+
+    /* EVENT LISTENERS */
+    document.getElementById('infoBtn').addEventListener('click', () => infoModal.classList.add('active'));
+    document.getElementById('dailyBtn').addEventListener('click', () => dailyModal.classList.add('active'));
+    
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.querySelectorAll('.close-btn, .modal-start-btn').forEach(btn => {
+        btn.addEventListener('click', () => modal.classList.remove('active'));
+      });
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => loadLevel(GAME.level));
+    document.getElementById('hintBtn').addEventListener('click', useHint);
+    document.getElementById('modeBtn').addEventListener('click', () => infoModal.classList.add('active'));
+
+    document.getElementById('soundBtn').addEventListener('click', () => {
+      GAME.soundEnabled = !GAME.soundEnabled;
+      document.getElementById('soundIcon').style.opacity = GAME.soundEnabled ? '1' : '0.35';
+    });
+
+    document.getElementById('nextLevelBtn').addEventListener('click', () => {
+      winModal.classList.remove('active');
+      if (GAME.isDaily) {
+        GAME.isDaily = false;
+      } else {
+        GAME.level++;
+      }
+      loadLevel(GAME.level);
+    });
+
+    document.getElementById('retryLevelBtn').addEventListener('click', () => {
+      loseModal.classList.remove('active');
+      loadLevel(GAME.level);
+    });
+
+    document.getElementById('playDailyBtn').addEventListener('click', () => {
+      dailyModal.classList.remove('active');
+      GAME.isDaily = true;
+      loadLevel(10);
+    });
+
+    window.addEventListener('load', () => {
+      initGame();
+      if (!localStorage.getItem('arrow_puzzle_played_10x10')) {
+        infoModal.classList.add('active');
+        localStorage.setItem('arrow_puzzle_played_10x10', 'true');
+      }
+    });
+  </script>
+</body>
+</html>
