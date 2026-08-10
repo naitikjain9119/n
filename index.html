@@ -1333,14 +1333,8 @@ function ea(s){return String(s||'').replace(/'/g,"\\'");}
 
 // ---- INIT ----
 loadDir('root');
-      window.addEventListener('hashchange', function() {
- var hash = window.location.hash.substring(1);
- if (hash) {
- loadDir(hash);
- }
-});
-
     </script>
+
     <!-- ANIMATION TRIGGER JS (ONLY FOR FOOTER) -->
     <script>
       document.addEventListener("DOMContentLoaded", function() {
