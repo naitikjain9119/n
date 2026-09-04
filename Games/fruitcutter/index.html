@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Fruit Archer — by Naitik Rakesh Kumar Jain</title>
+
+  <!-- MEDIAPIPE HAND TRACKING CDN SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* ==========================================================================
+       RESET & FULLSCREEN VIEWPORT FIT
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #080d1a;
+      font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #ffffff;
+      position: fixed;
+      inset: 0;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP WATERMARK CREDIT BAR */
+    #credit-bar {
+      width: 100%;
+      background: linear-gradient(90deg, #1e293b, #0f172a, #1e293b);
+      border-bottom: 1px solid rgba(250, 204, 21, 0.4);
+      padding: 4px 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #facc15;
+      text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+      z-index: 50;
+      flex-shrink: 0;
+    }
+
+    canvas#gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      z-index: 1;
+    }
+
+    /* ==========================================================================
+       TOP HUD (HEADS-UP DISPLAY)
+       ========================================================================== */
+    #hud {
+      position: relative;
+      width: 100%;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 20;
+      flex-shrink: 0;
+      gap: 6px;
+    }
+
+    .hud-left, .hud-right, .hud-center {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .hud-card {
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .hud-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+
+    .hud-value {
+      font-size: 16px;
+      font-weight: 900;
+      color: #38bdf8;
+    }
+
+    .score-val { color: #facc15; text-shadow: 0 0 8px rgba(250, 204, 21, 0.4); }
+    .cut-val { color: #4ade80; }
+    .miss-val { color: #f87171; }
+    .fruit-count-val { color: #c084fc; }
+
+    .hud-btn {
+      pointer-events: auto;
+      background: rgba(30, 41, 59, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 6px 11px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .hud-btn:hover {
+      background: rgba(56, 189, 248, 0.3);
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }
+
+    .hud-btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-switch {
+      background: linear-gradient(135deg, #4f46e5, #3b82f6);
+      border: 1px solid #93c5fd;
+    }
+
+    .btn-camera {
+      background: linear-gradient(135deg, #059669, #10b981);
+      border: 1px solid #6ee7b7;
+    }
+
+    .btn-camera.active-cam {
+      background: linear-gradient(135deg, #e11d48, #be123c);
+      border-color: #fda4af;
+      animation: pulse-cam 1.5s infinite;
+    }
+
+    @keyframes pulse-cam {
+      0%, 100% { box-shadow: 0 0 5px rgba(225, 29, 72, 0.6); }
+      50% { box-shadow: 0 0 15px rgba(225, 29, 72, 1); }
+    }
+
+    .btn-pause {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    /* ==========================================================================
+       CAMERA PREVIEW WIDGET
+       ========================================================================== */
+    #camera-preview-container {
+      position: absolute;
+      top: 60px;
+      left: 14px;
+      width: 140px;
+      height: 105px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #10b981;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      pointer-events: auto;
+    }
+
+    #camera-preview-container.active {
+      display: flex;
+    }
+
+    #cam-video {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    #cam-canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+    }
+
+    #cam-status-badge {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      color: #38bdf8;
+      font-size: 9px;
+      font-weight: 800;
+      text-align: center;
+      padding: 2px 4px;
+      z-index: 2;
+    }
+
+    /* ==========================================================================
+       VIRTUAL JOYSTICK & BOTTOM CONTROLS
+       ========================================================================== */
+    #bottom-control-dock {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      width: 100%;
+      padding: 0 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    .joystick-wrapper {
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .joystick-title {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.75);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    #joystick-zone {
+      position: relative;
+      width: 95px;
+      height: 95px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 2px solid rgba(56, 189, 248, 0.4);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.15);
+      touch-action: none;
+      cursor: pointer;
+    }
+
+    #joystick-knob {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 42px;
+      height: 42px;
+      margin-top: -21px;
+      margin-left: -21px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.6);
+      transform: translate(0px, 0px);
+      pointer-events: none;
+    }
+
+    .fire-btn-wrapper {
+      pointer-events: auto;
+    }
+
+    #btn-fire {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: 3px solid #fecaca;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.1;
+      transition: all 0.1s ease;
+      touch-action: none;
+    }
+
+    #btn-fire:active {
+      transform: scale(0.92);
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+
+    /* ==========================================================================
+       MODALS & OVERLAYS
+       ========================================================================== */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 13, 26, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 26px 22px;
+      max-width: 430px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.2);
+      transform: scale(0.92);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-size: 30px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #facc15, #f97316, #ef4444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+
+    .author-tag {
+      display: inline-block;
+      background: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      color: #facc15;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .primary-btn:hover {
+      background: linear-gradient(135deg, #4ade80, #22c55e);
+      transform: translateY(-2px);
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      padding: 10px 20px;
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 14px 0;
+      text-align: left;
+    }
+
+    .result-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 12px;
+      border-radius: 10px;
+    }
+
+    .result-item-full {
+      grid-column: span 2;
+      background: rgba(250, 204, 21, 0.1);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      text-align: center;
+    }
+
+    .result-item-title {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .result-item-val {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .instruction-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 7px;
+      text-align: left;
+    }
+
+    .cam-instructions {
+      border-left: 3px solid #10b981;
+      background: rgba(16, 185, 129, 0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <!-- TOP WEBSITE AUTHOR CREDIT BAR -->
+    <div id="credit-bar">
+      ✨ This website is made by Naitik Rakesh Kumar Jain ✨
+    </div>
+
+    <!-- CANVAS RENDERING ENGINE -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- COMPACT CAMERA PREVIEW WIDGET -->
+    <div id="camera-preview-container">
+      <video id="cam-video" playsinline muted autoplay></video>
+      <canvas id="cam-canvas"></canvas>
+      <div id="cam-status-badge">📷 Hand: Ready</div>
+    </div>
+
+    <!-- TOP HUD -->
+    <div id="hud">
+      <div class="hud-left">
+        <div class="hud-card">
+          <span class="hud-label">Score</span>
+          <span class="hud-value score-val" id="hud-score">0</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-label">Fruits</span>
+          <span class="hud-value fruit-count-val" id="hud-fruits">0 / 50</span>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="hud-card">
+          <span class="hud-label">Cut</span>
+          <span class="hud-value cut-val" id="hud-cut">0</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-label">Missed</span>
+          <span class="hud-value miss-val" id="hud-missed">0</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button class="hud-btn btn-camera" id="btn-camera-toggle" title="Toggle Camera Hand Tracking">
+          <span>📷</span> <span id="cam-btn-text">Camera</span>
+        </button>
+        <button class="hud-btn btn-switch" id="btn-switch-side" title="Switch Bow Position">
+          <span>↔</span> <span id="side-label">Right</span>
+        </button>
+        <button class="hud-btn btn-pause" id="btn-pause-toggle" title="Pause Game">
+          <span>⏸️</span>
+        </button>
+        <button class="hud-btn" id="btn-sound-toggle" title="Toggle Sound">🔊</button>
+      </div>
+    </div>
+
+    <!-- BOTTOM CONTROL DOCK (JOYSTICK & FIRE BUTTON) -->
+    <div id="bottom-control-dock">
+      <div class="joystick-wrapper">
+        <div class="joystick-title">🕹️ AIM & RELEASE SHOOT</div>
+        <div id="joystick-zone">
+          <div id="joystick-knob"></div>
+        </div>
+      </div>
+
+      <div class="fire-btn-wrapper">
+        <button id="btn-fire">
+          <span>🏹</span>
+          <span>SHOOT</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div class="modal-overlay active" id="modal-start">
+      <div class="modal-card">
+        <div style="font-size: 38px; margin-bottom: 4px;">🏹 🍎</div>
+        <h1 class="modal-title">FRUIT ARCHER</h1>
+        <div class="author-tag">Made by Naitik Rakesh Kumar Jain</div>
+        <p class="modal-subtitle">Play with Touch, Joystick OR Hand Camera Mode!</p>
+
+        <div class="btn-group">
+          <button class="primary-btn" id="btn-start-play">
+            <span>▶ START GAME</span>
+          </button>
+          <button class="secondary-btn" id="btn-how-to-play">
+            <span>ℹ️ HOW TO PLAY & CONTROLS</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW TO PLAY MODAL -->
+    <div class="modal-overlay" id="modal-instructions">
+      <div class="modal-card" style="max-height: 90vh; overflow-y: auto;">
+        <h2 class="modal-title" style="font-size: 22px;">HOW TO PLAY</h2>
+        <div style="margin: 12px 0;">
+          <div class="instruction-row">
+            <span>🕹️</span>
+            <span><strong>Joystick / Tap:</strong> Drag joystick to aim & release to shoot arrow! Tap repeatedly to fire multiple arrows.</span>
+          </div>
+          <div class="instruction-row">
+            <span>↔️</span>
+            <span><strong>Switch Bow:</strong> Tap top switch button to move Bow to Left or Right side.</span>
+          </div>
+          <div class="instruction-row">
+            <span>🍎</span>
+            <span><strong>Fruit Waves:</strong> 1-30 fruits spawn 1-by-1. Last 20 fruits (31-50) spawn 2-by-2!</span>
+          </div>
+          <div class="instruction-row cam-instructions">
+            <span>📷</span>
+            <span><strong>Smart Hand Tracking:</strong> Left Hand pulls $\rightarrow$ Shoots Right! Right Hand pulls $\rightarrow$ Shoots Left! Tilt hand Up/Down to aim vertically. Pinch to grab & release to fire!</span>
+          </div>
+        </div>
+        <button class="primary-btn" id="btn-close-instructions">
+          <span>LET'S PLAY!</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- PAUSE MODAL -->
+    <div class="modal-overlay" id="modal-pause">
+      <div class="modal-card">
+        <h2 class="modal-title" style="font-size: 26px; color: #facc15;">⏸️ GAME PAUSED</h2>
+        <p class="modal-subtitle" style="margin: 10px 0 20px;">All flying fruits are frozen in place.</p>
+        <button class="primary-btn" id="btn-resume-game">
+          <span>▶ RESUME GAME</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- GAME OVER / RESULTS SCREEN -->
+    <div class="modal-overlay" id="modal-gameover">
+      <div class="modal-card">
+        <div id="new-high-score-tag" class="author-tag" style="display: none; background: #dc2626; color: #fff;">
+          🎉 NEW HIGH SCORE! 🎉
+        </div>
+        <h2 class="modal-title" style="font-size: 26px;">GAME OVER</h2>
+        <div class="author-tag">Game by Naitik Rakesh Kumar Jain</div>
+
+        <div class="result-grid">
+          <div class="result-item result-item-full">
+            <div class="result-item-title">Final Score</div>
+            <div class="result-item-val score-val" id="res-score" style="font-size: 26px;">0</div>
+          </div>
+          <div class="result-item">
+            <div class="result-item-title">Fruits Cut</div>
+            <div class="result-item-val cut-val" id="res-cut">0 / 50</div>
+          </div>
+          <div class="result-item">
+            <div class="result-item-title">Fruits Missed</div>
+            <div class="result-item-val miss-val" id="res-miss">0</div>
+          </div>
+          <div class="result-item">
+            <div class="result-item-title">Accuracy</div>
+            <div class="result-item-val" id="res-accuracy" style="color: #38bdf8;">0%</div>
+          </div>
+          <div class="result-item">
+            <div class="result-item-title">Best Score</div>
+            <div class="result-item-val" id="res-best" style="color: #facc15;">0</div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="primary-btn" id="btn-restart">
+            <span>🔄 PLAY AGAIN</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================================================
+       GAME ENGINE & HAND TRACKING SCRIPT
+       ========================================================================== */
+  -->
+  <script>
+    'use strict';
+
+    /* ==========================================================================
+       1. CONSTANTS & FRUIT DEFINITIONS
+       ========================================================================== */
+    const CONFIG = {
+      TOTAL_FRUITS: 50,
+      SINGLE_FRUIT_LIMIT: 30,
+      GRAVITY: 0.28,
+      ARROW_GRAVITY: 0.20,
+      MAX_PULL_DIST: 130,
+      MAX_ARROW_SPEED: 27,
+      MIN_ARROW_SPEED: 9,
+      SPAWN_INTERVAL: 1600,
+      STORAGE_KEY: 'fruit_archery_naitik_score'
+    };
+
+    const FRUIT_TYPES = {
+      APPLE: { name: 'Apple', radius: 26, points: 10, color: '#ef4444', innerColor: '#fffbeb', seedColor: '#78350f' },
+      ORANGE: { name: 'Orange', radius: 28, points: 15, color: '#f97316', innerColor: '#fed7aa', seedColor: '#ea580c' },
+      WATERMELON: { name: 'Watermelon', radius: 36, points: 25, color: '#15803d', innerColor: '#f43f5e', seedColor: '#0f172a' },
+      BANANA: { name: 'Banana', radius: 25, points: 15, color: '#eab308', innerColor: '#fef08a', seedColor: '#ca8a04' },
+      STRAWBERRY: { name: 'Strawberry', radius: 22, points: 20, color: '#e11d48', innerColor: '#fda4af', seedColor: '#facc15' },
+      PINEAPPLE: { name: 'Pineapple', radius: 34, points: 30, color: '#d97706', innerColor: '#fde047', seedColor: '#b45309' },
+      KIWI: { name: 'Kiwi', radius: 23, points: 20, color: '#854d0e', innerColor: '#84cc16', seedColor: '#1e293b' },
+      PEACH: { name: 'Peach', radius: 26, points: 20, color: '#fb7185', innerColor: '#fed7aa', seedColor: '#9a3412' },
+      PEAR: { name: 'Pear', radius: 27, points: 15, color: '#84cc16', innerColor: '#f7fee7', seedColor: '#4d7c0f' },
+      MANGO: { name: 'Mango', radius: 29, points: 20, color: '#f59e0b', innerColor: '#fde68a', seedColor: '#d97706' }
+    };
+
+    const FRUIT_KEYS = Object.keys(FRUIT_TYPES);
+
+    /* ==========================================================================
+       2. WEB AUDIO API SYNTHESIZER
+       ========================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggle() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+      }
+
+      playBowPull() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(70, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.12);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } catch (e) {}
+      }
+
+      playShoot() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(100, now + 0.11);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.11);
+        } catch (e) {}
+      }
+
+      playFruitCut() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const bufferSize = this.ctx.sampleRate * 0.08;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(2200, now);
+          filter.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          noise.start(now);
+
+          const osc = this.ctx.createOscillator();
+          const oscGain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(750, now);
+          osc.frequency.exponentialRampToValueAtTime(250, now + 0.08);
+          oscGain.gain.setValueAtTime(0.25, now);
+          oscGain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+          osc.connect(oscGain);
+          oscGain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } catch (e) {}
+      }
+
+      playGameOver() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          [261.63, 329.63, 392.00, 523.25].forEach((freq, idx) => {
+            const now = this.ctx.currentTime + idx * 0.12;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.35);
+          });
+        } catch (e) {}
+      }
+
+      playClick() {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(200, now + 0.04);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        } catch (e) {}
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    /* ==========================================================================
+       3. UTILITIES & COLLISION DETECTION
+       ========================================================================== */
+    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+    function distSq(x1, y1, x2, y2) { return (x1 - x2) ** 2 + (y1 - y2) ** 2; }
+
+    function distToSegmentSquared(p, v, w) {
+      const l2 = distSq(v.x, v.y, w.x, w.y);
+      if (l2 === 0) return distSq(p.x, p.y, v.x, v.y);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = clamp(t, 0, 1);
+      return distSq(p.x, p.y, v.x + t * (w.x - v.x), v.y + t * (w.y - v.y));
+    }
+
+    /* ==========================================================================
+       4. PROCEDURAL FRUIT GRAPHICS
+       ========================================================================== */
+    function drawFruitShape(ctx, typeKey, radius) {
+      const info = FRUIT_TYPES[typeKey];
+      ctx.save();
+      switch (typeKey) {
+        case 'APPLE':
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(-radius * 0.35, -radius * 0.1, radius * 0.7, 0, Math.PI * 2);
+          ctx.arc(radius * 0.35, -radius * 0.1, radius * 0.7, 0, Math.PI * 2);
+          ctx.arc(0, radius * 0.25, radius * 0.75, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          ctx.beginPath();
+          ctx.arc(-radius * 0.35, -radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#5c2b09';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(0, -radius * 0.5);
+          ctx.quadraticCurveTo(radius * 0.2, -radius * 1.0, radius * 0.1, -radius * 1.1);
+          ctx.stroke();
+          ctx.fillStyle = '#22c55e';
+          ctx.beginPath();
+          ctx.ellipse(radius * 0.35, -radius * 0.85, radius * 0.3, radius * 0.15, Math.PI / 4, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        case 'ORANGE':
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ea580c';
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+            ctx.beginPath();
+            ctx.arc(Math.cos(a) * radius * 0.5, Math.sin(a) * radius * 0.5, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        case 'WATERMELON':
+          ctx.fillStyle = '#166534';
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#22c55e';
+          for (let i = -2; i <= 2; i++) {
+            ctx.beginPath();
+            ctx.ellipse(i * (radius * 0.35), 0, radius * 0.12, radius * 0.95, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        case 'BANANA':
+          ctx.fillStyle = '#eab308';
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0.2, Math.PI - 0.2);
+          ctx.quadraticCurveTo(0, -radius * 0.2, radius * 0.9, radius * 0.2);
+          ctx.fill();
+          break;
+        case 'STRAWBERRY':
+          ctx.fillStyle = '#e11d48';
+          ctx.beginPath();
+          ctx.moveTo(0, radius * 0.95);
+          ctx.bezierCurveTo(-radius * 1.1, 0, -radius * 0.9, -radius * 0.7, 0, -radius * 0.5);
+          ctx.bezierCurveTo(radius * 0.9, -radius * 0.7, radius * 1.1, 0, 0, radius * 0.95);
+          ctx.fill();
+          ctx.fillStyle = '#16a34a';
+          for (let k = -2; k <= 2; k++) {
+            ctx.beginPath();
+            ctx.ellipse(k * 6, -radius * 0.6, 5, 10, (k * Math.PI) / 8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        default:
+          ctx.fillStyle = info.color;
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0, Math.PI * 2);
+          ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawFruitHalf(ctx, typeKey, radius, isLeftHalf) {
+      const info = FRUIT_TYPES[typeKey];
+      ctx.save();
+      ctx.beginPath();
+      if (isLeftHalf) ctx.arc(0, 0, radius, Math.PI * 0.5, Math.PI * 1.5);
+      else ctx.arc(0, 0, radius, -Math.PI * 0.5, Math.PI * 0.5);
+      ctx.closePath();
+      ctx.fillStyle = info.color;
+      ctx.fill();
+
+      ctx.beginPath();
+      if (isLeftHalf) ctx.arc(0, 0, radius * 0.85, Math.PI * 0.5, Math.PI * 1.5);
+      else ctx.arc(0, 0, radius * 0.85, -Math.PI * 0.5, Math.PI * 0.5);
+      ctx.closePath();
+      ctx.fillStyle = info.innerColor;
+      ctx.fill();
+
+      ctx.fillStyle = info.seedColor;
+      for (let s = -radius * 0.4; s <= radius * 0.4; s += radius * 0.3) {
+        ctx.beginPath();
+        const offsetX = isLeftHalf ? -radius * 0.25 : radius * 0.25;
+        ctx.arc(offsetX, s, radius * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    /* ==========================================================================
+       5. GAME ENTITIES
+       ========================================================================== */
+    class Fruit {
+      constructor(canvasWidth, canvasHeight) {
+        this.typeKey = FRUIT_KEYS[Math.floor(Math.random() * FRUIT_KEYS.length)];
+        this.info = FRUIT_TYPES[this.typeKey];
+        this.radius = this.info.radius;
+        this.cut = false;
+        this.missed = false;
+
+        const startX = Math.random() * (canvasWidth * 0.6) + canvasWidth * 0.2;
+        this.x = startX;
+        this.y = canvasHeight + this.radius + 10;
+        this.vx = (Math.random() - 0.5) * 4.5;
+        this.vy = -(Math.random() * 3.5 + 14.5);
+        this.rotation = Math.random() * Math.PI * 2;
+        this.vRot = (Math.random() - 0.5) * 0.05;
+      }
+
+      update(canvasHeight) {
+        if (this.cut) return;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += CONFIG.GRAVITY;
+        this.rotation += this.vRot;
+
+        if (this.vy > 0 && this.y > canvasHeight + this.radius + 20) {
+          this.missed = true;
+        }
+      }
+
+      draw(ctx) {
+        if (this.cut) return;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        drawFruitShape(ctx, this.typeKey, this.radius);
+        ctx.restore();
+      }
+    }
+
+    class FruitHalf {
+      constructor(x, y, vx, vy, typeKey, radius, cutAngle, isLeft) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.typeKey = typeKey;
+        this.radius = radius;
+        this.isLeft = isLeft;
+        this.rotation = cutAngle;
+        this.vRot = isLeft ? -0.08 : 0.08;
+        this.alpha = 1.0;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += CONFIG.GRAVITY * 1.1;
+        this.rotation += this.vRot;
+        this.alpha -= 0.015;
+      }
+
+      draw(ctx) {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        drawFruitHalf(ctx, this.typeKey, this.radius, this.isLeft);
+        ctx.restore();
+      }
+    }
+
+    class Arrow {
+      constructor(x, y, vx, vy) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.length = 56;
+        this.active = true;
+      }
+
+      update(canvasWidth, canvasHeight) {
+        if (!this.active) return;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += CONFIG.ARROW_GRAVITY;
+
+        if (this.x < -100 || this.x > canvasWidth + 100 || this.y < -100 || this.y > canvasHeight + 100) {
+          this.active = false;
+        }
+      }
+
+      getTip() { return { x: this.x, y: this.y }; }
+      getTail() {
+        const angle = Math.atan2(this.vy, this.vx);
+        return {
+          x: this.x - Math.cos(angle) * this.length,
+          y: this.y - Math.sin(angle) * this.length
+        };
+      }
+
+      draw(ctx) {
+        if (!this.active) return;
+        const angle = Math.atan2(this.vy, this.vx);
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(angle);
+
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-this.length, 0);
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(-8, -6);
+        ctx.lineTo(-4, 0);
+        ctx.lineTo(-8, 6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(-this.length + 14, 0);
+        ctx.lineTo(-this.length, -6);
+        ctx.lineTo(-this.length - 4, -6);
+        ctx.lineTo(-this.length + 4, 0);
+        ctx.lineTo(-this.length - 4, 6);
+        ctx.lineTo(-this.length, 6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 7 + 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.radius = Math.random() * 3.5 + 2;
+        this.alpha = 1.0;
+        this.decay = Math.random() * 0.03 + 0.02;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += CONFIG.GRAVITY * 0.6;
+        this.alpha -= this.decay;
+      }
+
+      draw(ctx) {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    class FloatingText {
+      constructor(x, y, text) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.vy = -2.0;
+        this.alpha = 1.0;
+      }
+
+      update() {
+        this.y += this.vy;
+        this.alpha -= 0.025;
+      }
+
+      draw(ctx) {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.font = '900 20px system-ui, sans-serif';
+        ctx.fillStyle = '#facc15';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 6;
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+      }
+    }
+
+    /* ==========================================================================
+       6. BOW CONTROLLER (WITH EXTENDED & DEEP TRAJECTORY PATH)
+       ========================================================================== */
+    class Bow {
+      constructor() {
+        this.side = 'right';
+        this.x = 0;
+        this.y = 0;
+        this.isPulling = false;
+        this.pullPower = 0.65;
+        this.aimAngle = Math.PI - 0.2;
+        this.limbLength = 52;
+      }
+
+      updatePosition(width, height) {
+        const padding = 65;
+        if (this.side === 'right') {
+          this.x = width - padding;
+          this.y = height * 0.52;
+          if (!this.isPulling) this.aimAngle = Math.PI - 0.2;
+        } else {
+          this.x = padding;
+          this.y = height * 0.52;
+          if (!this.isPulling) this.aimAngle = 0.2;
+        }
+      }
+
+      setSide(side, width, height) {
+        if (this.side !== side) {
+          this.side = side;
+          this.updatePosition(width, height);
+        }
+      }
+
+      toggleSide(width, height) {
+        this.side = this.side === 'right' ? 'left' : 'right';
+        this.updatePosition(width, height);
+        return this.side;
+      }
+
+      setAim(angle, power) {
+        this.aimAngle = angle;
+        this.pullPower = clamp(power, 0.2, 1.0);
+      }
+
+      startDirectPull(touchX, touchY) {
+        this.isPulling = true;
+        this.updateDirectPull(touchX, touchY);
+        sound.playBowPull();
+      }
+
+      updateDirectPull(touchX, touchY) {
+        if (!this.isPulling) return;
+        const dx = touchX - this.x;
+        const dy = touchY - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        this.aimAngle = Math.atan2(-dy, -dx);
+        this.pullPower = clamp(dist / CONFIG.MAX_PULL_DIST, 0.15, 1.0);
+      }
+
+      releaseDirect() {
+        if (!this.isPulling) return null;
+        this.isPulling = false;
+        if (this.pullPower < 0.15) return null;
+        return this.shoot();
+      }
+
+      shoot() {
+        const speed = CONFIG.MIN_ARROW_SPEED + this.pullPower * (CONFIG.MAX_ARROW_SPEED - CONFIG.MIN_ARROW_SPEED);
+        const vx = Math.cos(this.aimAngle) * speed;
+        const vy = Math.sin(this.aimAngle) * speed;
+
+        sound.playShoot();
+        return new Arrow(this.x, this.y, vx, vy);
+      }
+
+      draw(ctx, screenWidth, screenHeight) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.aimAngle);
+
+        const bend = this.pullPower * 15;
+        const nockX = -this.pullPower * 35;
+
+        // String
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(10 - bend, -this.limbLength);
+        ctx.lineTo(nockX, 0);
+        ctx.lineTo(10 - bend, this.limbLength);
+        ctx.stroke();
+
+        // Stave
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 7;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(10 - bend, -this.limbLength);
+        ctx.quadraticCurveTo(22, 0, 10 - bend, this.limbLength);
+        ctx.stroke();
+
+        // Grip
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(18, -10);
+        ctx.lineTo(18, 10);
+        ctx.stroke();
+
+        // Arrow on Bow
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(nockX, 0);
+        ctx.lineTo(nockX + 55, 0);
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.moveTo(nockX + 63, 0);
+        ctx.lineTo(nockX + 50, -5);
+        ctx.lineTo(nockX + 54, 0);
+        ctx.lineTo(nockX + 50, 5);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+
+        /* ==========================================================================
+           DEEP, LONG & VIVID TRAJECTORY SIMULATION PATH
+           ========================================================================== */
+        ctx.save();
+        const speed = CONFIG.MIN_ARROW_SPEED + this.pullPower * (CONFIG.MAX_ARROW_SPEED - CONFIG.MIN_ARROW_SPEED);
+        let simX = this.x;
+        let simY = this.y;
+        let simVx = Math.cos(this.aimAngle) * speed;
+        let simVy = Math.sin(this.aimAngle) * speed;
+
+        const maxSteps = 48; // Significantly extended path
+        for (let step = 0; step < maxSteps; step++) {
+          simX += simVx;
+          simY += simVy;
+          simVy += CONFIG.ARROW_GRAVITY;
+
+          if (simX < -50 || simX > screenWidth + 50 || simY > screenHeight + 60) break;
+
+          const progress = 1 - (step / maxSteps);
+
+          // Outer Glow
+          ctx.beginPath();
+          ctx.arc(simX, simY, Math.max(3.5, 6.0 * progress), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(250, 204, 21, ${0.45 * progress + 0.1})`;
+          ctx.fill();
+
+          // Inner Solid Deep Dot
+          ctx.beginPath();
+          ctx.arc(simX, simY, Math.max(2.0, 3.8 * progress), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(56, 189, 248, ${0.9 * progress + 0.15})`;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    /* ==========================================================================
+       7. HAND TRACKING CONTROLLER (SMART HAND SIDE & TILT DETECTION)
+       ========================================================================== */
+    class HandTrackingController {
+      constructor(engine) {
+        this.engine = engine;
+        this.active = false;
+        this.hands = null;
+        this.camera = null;
+        this.video = document.getElementById('cam-video');
+        this.canvas = document.getElementById('cam-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.badge = document.getElementById('cam-status-badge');
+        this.container = document.getElementById('camera-preview-container');
+        this.btn = document.getElementById('btn-camera-toggle');
+
+        this.isPinching = false;
+        this.smoothVx = -1.0;
+        this.smoothVy = -0.2;
+        this.smoothPower = 0.65;
+      }
+
+      async toggle() {
+        if (this.active) {
+          this.stop();
+        } else {
+          await this.start();
+        }
+      }
+
+      async start() {
+        sound.init();
+        if (typeof window.Hands === 'undefined') {
+          alert('Camera Hand Tracking library is loading. Please check your internet connection.');
+          return;
+        }
+
+        try {
+          this.badge.textContent = 'Starting Camera...';
+          this.container.classList.add('active');
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }
+          });
+          this.video.srcObject = stream;
+          await this.video.play();
+
+          this.canvas.width = 320;
+          this.canvas.height = 240;
+
+          if (!this.hands) {
+            this.hands = new Hands({
+              locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+            this.hands.setOptions({
+              maxNumHands: 1,
+              modelComplexity: 1,
+              minDetectionConfidence: 0.55,
+              minTrackingConfidence: 0.55
+            });
+            this.hands.onResults((results) => this.onResults(results));
+          }
+
+          if (!this.camera) {
+            this.camera = new Camera(this.video, {
+              onFrame: async () => {
+                if (this.active) await this.hands.send({ image: this.video });
+              },
+              width: 320,
+              height: 240
+            });
+          }
+
+          await this.camera.start();
+          this.active = true;
+          this.btn.classList.add('active-cam');
+          document.getElementById('cam-btn-text').textContent = 'Camera ON';
+          this.badge.textContent = '🖐️ Hand: Ready';
+        } catch (err) {
+          console.error(err);
+          this.stop();
+          alert('Camera access unavailable or denied. You can play using Touch/Joystick!');
+        }
+      }
+
+      stop() {
+        this.active = false;
+        if (this.camera) {
+          try { this.camera.stop(); } catch (e) {}
+        }
+        if (this.video && this.video.srcObject) {
+          const tracks = this.video.srcObject.getTracks();
+          tracks.forEach(track => track.stop());
+          this.video.srcObject = null;
+        }
+        this.container.classList.remove('active');
+        this.btn.classList.remove('active-cam');
+        document.getElementById('cam-btn-text').textContent = 'Camera';
+        this.isPinching = false;
+      }
+
+      onResults(results) {
+        if (!this.active) return;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+          this.badge.textContent = '❌ Hand Lost';
+          this.isPinching = false;
+          return;
+        }
+
+        const landmarks = results.multiHandLandmarks[0];
+        this.drawSkeleton(landmarks);
+
+        // MediaPipe Hand Classification
+        let detectedSide = 'right'; // default
+        if (results.multiHandedness && results.multiHandedness.length > 0) {
+          const rawLabel = results.multiHandedness[0].label; // 'Left' or 'Right'
+          // Note: In mirrored front cam, physical left hand is detected accurately:
+          detectedSide = (rawLabel === 'Left') ? 'left' : 'right';
+        }
+
+        // Key Hand Reference Landmarks
+        const wrist = landmarks[0];
+        const thumbTip = landmarks[4];
+        const indexTip = landmarks[8];
+        const middleMcp = landmarks[9];
+
+        // Pinch Point & Hand Direction Vector
+        const pinchCenter = {
+          x: (thumbTip.x + indexTip.x) * 0.5,
+          y: (thumbTip.y + indexTip.y) * 0.5
+        };
+
+        const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+        const handScale = Math.hypot(wrist.x - middleMcp.x, wrist.y - middleMcp.y) || 0.25;
+        const normalizedPinch = pinchDist / handScale;
+        const isNowPinching = normalizedPinch < 0.32;
+
+        /* ==========================================================================
+           SMART HAND SIDE & TILT (UP/DOWN/SIDE) ANGLE CALCULATION
+           ========================================================================== */
+        // Vector from Wrist/Palm to Pinch Tip
+        const deltaX = pinchCenter.x - wrist.x;
+        const deltaY = pinchCenter.y - wrist.y; // < 0 means fingertips are UP, > 0 means fingertips are DOWN
+
+        // Vertical tilt component:
+        const verticalFactor = clamp(deltaY / handScale, -1.5, 1.5);
+
+        let targetVx = 0;
+        let targetVy = verticalFactor * 0.85;
+
+        // RULE: Left hand -> Shoots RIGHT (Bow on Left); Right hand -> Shoots LEFT (Bow on Right)
+        if (detectedSide === 'left') {
+          this.engine.setBowSide('left');
+          targetVx = 1.0; // Shoot towards Right (+X)
+        } else {
+          this.engine.setBowSide('right');
+          targetVx = -1.0; // Shoot towards Left (-X)
+        }
+
+        // Smooth Exponential Moving Average to prevent jitter
+        this.smoothVx = this.smoothVx * 0.65 + targetVx * 0.35;
+        this.smoothVy = this.smoothVy * 0.65 + targetVy * 0.35;
+
+        const aimAngle = Math.atan2(this.smoothVy, this.smoothVx);
+        const targetPower = clamp(0.45 + (1 - normalizedPinch) * 0.65, 0.3, 1.0);
+        this.smoothPower = this.smoothPower * 0.7 + targetPower * 0.3;
+
+        this.engine.bow.setAim(aimAngle, this.smoothPower);
+
+        // Pinch Handling
+        if (isNowPinching) {
+          if (!this.isPinching) {
+            this.isPinching = true;
+            sound.playBowPull();
+          }
+          this.badge.textContent = `🎯 ${detectedSide.toUpperCase()} Hand: Aiming (${Math.round(this.smoothPower * 100)}%)`;
+        } else {
+          if (this.isPinching) {
+            this.isPinching = false;
+            this.badge.textContent = '🚀 Arrow Shot!';
+            if (this.engine.isRunning && !this.engine.isPaused) {
+              this.engine.shootArrowFromBow();
+            }
+          } else {
+            this.badge.textContent = `🖐️ ${detectedSide.toUpperCase()} Hand Ready`;
+          }
+        }
+      }
+
+      drawSkeleton(landmarks) {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.lineWidth = 2;
+
+        const connections = [
+          [0, 1], [1, 2], [2, 3], [3, 4],
+          [0, 5], [5, 6], [6, 7], [7, 8],
+          [5, 9], [9, 10], [10, 11], [11, 12],
+          [9, 13], [13, 14], [14, 15], [15, 16],
+          [13, 17], [17, 18], [18, 19], [19, 20], [0, 17]
+        ];
+
+        connections.forEach(([i, j]) => {
+          ctx.beginPath();
+          ctx.moveTo(landmarks[i].x * w, landmarks[i].y * h);
+          ctx.lineTo(landmarks[j].x * w, landmarks[j].y * h);
+          ctx.stroke();
+        });
+
+        // Highlights for Thumb & Index
+        [4, 8].forEach(idx => {
+          ctx.fillStyle = this.isPinching ? '#ef4444' : '#facc15';
+          ctx.beginPath();
+          ctx.arc(landmarks[idx].x * w, landmarks[idx].y * h, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+    }
+
+    /* ==========================================================================
+       8. MAIN GAME ENGINE
+       ========================================================================== */
+    class GameEngine {
+      constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        this.bow = new Bow();
+        this.fruits = [];
+        this.fruitHalves = [];
+        this.arrows = [];
+        this.particles = [];
+        this.floatingTexts = [];
+
+        this.score = 0;
+        this.spawnedCount = 0;
+        this.cutCount = 0;
+        this.missedCount = 0;
+        this.bestScore = 0;
+
+        this.isRunning = false;
+        this.isPaused = false;
+        this.isGameOver = false;
+        this.lastSpawnTime = 0;
+
+        this.clouds = [
+          { x: 60, y: 70, speed: 0.25, size: 40 },
+          { x: 320, y: 120, speed: 0.18, size: 30 },
+          { x: 640, y: 50, speed: 0.3, size: 50 }
+        ];
+
+        this.cameraController = new HandTrackingController(this);
+
+        this.loadBestScore();
+        this.initDOM();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.bindEvents();
+        this.setupJoystick();
+
+        requestAnimationFrame((t) => this.gameLoop(t));
+      }
+
+      loadBestScore() {
+        try {
+          const saved = localStorage.getItem(CONFIG.STORAGE_KEY);
+          this.bestScore = saved ? parseInt(saved, 10) || 0 : 0;
+        } catch (e) {
+          this.bestScore = 0;
+        }
+      }
+
+      saveBestScore() {
+        if (this.score > this.bestScore) {
+          this.bestScore = this.score;
+          try { localStorage.setItem(CONFIG.STORAGE_KEY, this.bestScore.toString()); } catch (e) {}
+          return true;
+        }
+        return false;
+      }
+
+      initDOM() {
+        this.hudScore = document.getElementById('hud-score');
+        this.hudFruits = document.getElementById('hud-fruits');
+        this.hudCut = document.getElementById('hud-cut');
+        this.hudMissed = document.getElementById('hud-missed');
+        this.sideLabel = document.getElementById('side-label');
+
+        this.modalStart = document.getElementById('modal-start');
+        this.modalInstructions = document.getElementById('modal-instructions');
+        this.modalPause = document.getElementById('modal-pause');
+        this.modalGameOver = document.getElementById('modal-gameover');
+      }
+
+      setBowSide(side) {
+        this.bow.setSide(side, this.width, this.height);
+        this.sideLabel.textContent = side === 'right' ? 'Right' : 'Left';
+      }
+
+      resize() {
+        this.dpr = window.devicePixelRatio || 1;
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.width = rect.width;
+        this.height = rect.height;
+
+        this.canvas.width = this.width * this.dpr;
+        this.canvas.height = this.height * this.dpr;
+        this.ctx.scale(this.dpr, this.dpr);
+
+        this.bow.updatePosition(this.width, this.height);
+      }
+
+      shootArrowFromBow() {
+        const arrow = this.bow.shoot();
+        if (arrow) this.arrows.push(arrow);
+      }
+
+      bindEvents() {
+        document.getElementById('btn-start-play').addEventListener('click', () => {
+          sound.init();
+          sound.playClick();
+          this.modalStart.classList.remove('active');
+          this.startGame();
+        });
+
+        document.getElementById('btn-how-to-play').addEventListener('click', () => {
+          sound.init();
+          sound.playClick();
+          this.modalInstructions.classList.add('active');
+        });
+
+        document.getElementById('btn-close-instructions').addEventListener('click', () => {
+          sound.init();
+          sound.playClick();
+          this.modalInstructions.classList.remove('active');
+        });
+
+        document.getElementById('btn-restart').addEventListener('click', () => {
+          sound.init();
+          sound.playClick();
+          this.modalGameOver.classList.remove('active');
+          this.startGame();
+        });
+
+        // Switch Bow Side
+        document.getElementById('btn-switch-side').addEventListener('click', () => {
+          sound.init();
+          sound.playClick();
+          const newSide = this.bow.toggleSide(this.width, this.height);
+          this.sideLabel.textContent = newSide === 'right' ? 'Right' : 'Left';
+        });
+
+        // Camera Toggle
+        document.getElementById('btn-camera-toggle').addEventListener('click', () => {
+          this.cameraController.toggle();
+        });
+
+        // Pause Toggle
+        const togglePause = () => {
+          if (!this.isRunning || this.isGameOver) return;
+          sound.init();
+          sound.playClick();
+          this.isPaused = !this.isPaused;
+          if (this.isPaused) {
+            this.modalPause.classList.add('active');
+          } else {
+            this.modalPause.classList.remove('active');
+          }
+        };
+
+        document.getElementById('btn-pause-toggle').addEventListener('click', togglePause);
+        document.getElementById('btn-resume-game').addEventListener('click', togglePause);
+
+        // Sound Toggle
+        document.getElementById('btn-sound-toggle').addEventListener('click', () => {
+          sound.init();
+          const state = sound.toggle();
+          document.getElementById('btn-sound-toggle').textContent = state ? '🔊' : '🔇';
+          sound.playClick();
+        });
+
+        // Dedicated Shoot Button
+        document.getElementById('btn-fire').addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          if (!this.isRunning || this.isPaused || this.isGameOver) return;
+          sound.init();
+          this.shootArrowFromBow();
+        });
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'p' || e.key === 'P') togglePause();
+          if (e.key === ' ' || e.key === 'Enter') {
+            if (this.isRunning && !this.isPaused) {
+              this.shootArrowFromBow();
+            }
+          }
+        });
+
+        // Direct Screen Drag/Pull Shoot
+        this.canvas.addEventListener('pointerdown', (e) => {
+          if (!this.isRunning || this.isPaused || this.isGameOver) return;
+          sound.init();
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          this.bow.startDirectPull(x, y);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (!this.isRunning || this.isPaused || !this.bow.isPulling) return;
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          this.bow.updateDirectPull(x, y);
+        });
+
+        window.addEventListener('pointerup', () => {
+          if (!this.isRunning || !this.bow.isPulling) return;
+          const arrow = this.bow.releaseDirect();
+          if (arrow) this.arrows.push(arrow);
+        });
+      }
+
+      setupJoystick() {
+        const zone = document.getElementById('joystick-zone');
+        const knob = document.getElementById('joystick-knob');
+        let active = false;
+        let startX = 0, startY = 0;
+        const maxRadius = 36;
+
+        const handleStart = (e) => {
+          if (!this.isRunning || this.isPaused) return;
+          sound.init();
+          active = true;
+          const rect = zone.getBoundingClientRect();
+          startX = rect.left + rect.width / 2;
+          startY = rect.top + rect.height / 2;
+          handleMove(e);
+        };
+
+        const handleMove = (e) => {
+          if (!active) return;
+          const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+          const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+          if (!clientX || !clientY) return;
+
+          let dx = clientX - startX;
+          let dy = clientY - startY;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist > maxRadius) {
+            dx = (dx / dist) * maxRadius;
+            dy = (dy / dist) * maxRadius;
+          }
+
+          knob.style.transform = `translate(${dx}px, ${dy}px)`;
+
+          const angle = Math.atan2(dy, dx);
+          const power = clamp(dist / maxRadius, 0.25, 1.0);
+          this.bow.setAim(angle, power);
+        };
+
+        const handleEnd = () => {
+          if (!active) return;
+          active = false;
+          knob.style.transform = `translate(0px, 0px)`;
+
+          if (this.isRunning && !this.isPaused && !this.isGameOver) {
+            this.shootArrowFromBow();
+          }
+        };
+
+        zone.addEventListener('pointerdown', handleStart);
+        window.addEventListener('pointermove', handleMove);
+        window.addEventListener('pointerup', handleEnd);
+        window.addEventListener('pointercancel', handleEnd);
+      }
+
+      startGame() {
+        this.score = 0;
+        this.spawnedCount = 0;
+        this.cutCount = 0;
+        this.missedCount = 0;
+        this.fruits = [];
+        this.fruitHalves = [];
+        this.arrows = [];
+        this.particles = [];
+        this.floatingTexts = [];
+        this.isRunning = true;
+        this.isPaused = false;
+        this.isGameOver = false;
+        this.lastSpawnTime = performance.now();
+        this.updateHUD();
+      }
+
+      updateHUD() {
+        this.hudScore.textContent = this.score;
+        this.hudFruits.textContent = `${this.spawnedCount} / ${CONFIG.TOTAL_FRUITS}`;
+        this.hudCut.textContent = this.cutCount;
+        this.hudMissed.textContent = this.missedCount;
+      }
+
+      spawnFruits() {
+        if (this.spawnedCount >= CONFIG.TOTAL_FRUITS) return;
+
+        let countToSpawn = 1;
+        if (this.spawnedCount >= CONFIG.SINGLE_FRUIT_LIMIT) {
+          countToSpawn = Math.min(2, CONFIG.TOTAL_FRUITS - this.spawnedCount);
+        }
+
+        for (let i = 0; i < countToSpawn; i++) {
+          this.fruits.push(new Fruit(this.width, this.height));
+          this.spawnedCount++;
+        }
+
+        this.updateHUD();
+      }
+
+      sliceFruit(fruit, arrow) {
+        fruit.cut = true;
+        this.cutCount++;
+        this.score += fruit.info.points;
+
+        sound.playFruitCut();
+
+        const cutAngle = Math.atan2(arrow.vy, arrow.vx);
+        const perpX = -Math.sin(cutAngle) * 3.5;
+        const perpY = Math.cos(cutAngle) * 3.5;
+
+        this.fruitHalves.push(new FruitHalf(fruit.x, fruit.y, fruit.vx + perpX, fruit.vy + perpY - 2, fruit.typeKey, fruit.radius, cutAngle, true));
+        this.fruitHalves.push(new FruitHalf(fruit.x, fruit.y, fruit.vx - perpX, fruit.vy - perpY - 2, fruit.typeKey, fruit.radius, cutAngle, false));
+
+        for (let i = 0; i < 16; i++) {
+          this.particles.push(new Particle(fruit.x, fruit.y, fruit.info.color));
+          this.particles.push(new Particle(fruit.x, fruit.y, fruit.info.innerColor));
+        }
+
+        this.floatingTexts.push(new FloatingText(fruit.x, fruit.y - 15, `+${fruit.info.points}`));
+        this.updateHUD();
+      }
+
+      triggerGameOver() {
+        this.isRunning = false;
+        this.isGameOver = true;
+
+        const isNewHigh = this.saveBestScore();
+        const accuracy = this.spawnedCount > 0 ? Math.round((this.cutCount / this.spawnedCount) * 100) : 0;
+
+        document.getElementById('res-score').textContent = this.score;
+        document.getElementById('res-cut').textContent = `${this.cutCount} / ${CONFIG.TOTAL_FRUITS}`;
+        document.getElementById('res-miss').textContent = this.missedCount;
+        document.getElementById('res-accuracy').textContent = `${accuracy}%`;
+        document.getElementById('res-best').textContent = this.bestScore;
+
+        const tag = document.getElementById('new-high-score-tag');
+        tag.style.display = isNewHigh ? 'inline-block' : 'none';
+
+        sound.playGameOver();
+        this.modalGameOver.classList.add('active');
+      }
+
+      update(timestamp) {
+        if (!this.isRunning || this.isPaused) return;
+
+        // Spawner
+        if (this.spawnedCount < CONFIG.TOTAL_FRUITS) {
+          if (timestamp - this.lastSpawnTime > CONFIG.SPAWN_INTERVAL) {
+            this.spawnFruits();
+            this.lastSpawnTime = timestamp;
+          }
+        }
+
+        // Update Fruits
+        for (let i = this.fruits.length - 1; i >= 0; i--) {
+          const f = this.fruits[i];
+          f.update(this.height);
+          if (f.missed) {
+            this.missedCount++;
+            this.fruits.splice(i, 1);
+            this.updateHUD();
+          } else if (f.cut) {
+            this.fruits.splice(i, 1);
+          }
+        }
+
+        // Update Arrows & Collision
+        for (let a = this.arrows.length - 1; a >= 0; a--) {
+          const arr = this.arrows[a];
+          arr.update(this.width, this.height);
+
+          if (!arr.active) {
+            this.arrows.splice(a, 1);
+            continue;
+          }
+
+          const tip = arr.getTip();
+          const tail = arr.getTail();
+
+          for (let f = 0; f < this.fruits.length; f++) {
+            const fruit = this.fruits[f];
+            if (fruit.cut || fruit.missed) continue;
+
+            if (distToSegmentSquared({ x: fruit.x, y: fruit.y }, tip, tail) <= (fruit.radius + 6) ** 2) {
+              this.sliceFruit(fruit, arr);
+            }
+          }
+        }
+
+        // Fruit Halves
+        for (let h = this.fruitHalves.length - 1; h >= 0; h--) {
+          const half = this.fruitHalves[h];
+          half.update();
+          if (half.alpha <= 0 || half.y > this.height + 60) this.fruitHalves.splice(h, 1);
+        }
+
+        // Particles
+        for (let p = this.particles.length - 1; p >= 0; p--) {
+          const part = this.particles[p];
+          part.update();
+          if (part.alpha <= 0) this.particles.splice(p, 1);
+        }
+
+        // Floating Texts
+        for (let t = this.floatingTexts.length - 1; t >= 0; t--) {
+          const ft = this.floatingTexts[t];
+          ft.update();
+          if (ft.alpha <= 0) this.floatingTexts.splice(t, 1);
+        }
+
+        // Check Complete 50 Fruits Cycle
+        if (
+          this.spawnedCount >= CONFIG.TOTAL_FRUITS &&
+          this.fruits.length === 0 &&
+          this.cutCount + this.missedCount >= CONFIG.TOTAL_FRUITS
+        ) {
+          setTimeout(() => this.triggerGameOver(), 600);
+          this.isRunning = false;
+        }
+      }
+
+      drawBackground() {
+        const ctx = this.ctx;
+        const sky = ctx.createLinearGradient(0, 0, 0, this.height);
+        sky.addColorStop(0, '#0369a1');
+        sky.addColorStop(0.55, '#38bdf8');
+        sky.addColorStop(1, '#bae6fd');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        this.clouds.forEach(c => {
+          if (!this.isPaused) {
+            c.x += c.speed;
+            if (c.x > this.width + 100) c.x = -100;
+          }
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+          ctx.arc(c.x + c.size * 0.6, c.y - c.size * 0.2, c.size * 0.8, 0, Math.PI * 2);
+          ctx.arc(c.x + c.size * 1.2, c.y, c.size * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.fillStyle = '#15803d';
+        ctx.beginPath();
+        ctx.ellipse(this.width * 0.3, this.height, this.width * 0.45, 65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#166534';
+        ctx.beginPath();
+        ctx.ellipse(this.width * 0.75, this.height, this.width * 0.5, 75, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      render() {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        this.drawBackground();
+
+        for (let half of this.fruitHalves) half.draw(this.ctx);
+        for (let fruit of this.fruits) fruit.draw(this.ctx);
+        for (let arrow of this.arrows) arrow.draw(this.ctx);
+
+        this.bow.draw(this.ctx, this.width, this.height);
+
+        for (let p of this.particles) p.draw(this.ctx);
+        for (let ft of this.floatingTexts) ft.draw(this.ctx);
+      }
+
+      gameLoop(timestamp) {
+        this.update(timestamp);
+        this.render();
+        requestAnimationFrame((t) => this.gameLoop(t));
+      }
+    }
+
+    // Start Engine
+    window.addEventListener('DOMContentLoaded', () => {
+      window.game = new GameEngine();
+    });
+  </script>
+</body>
+</html>
