@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HTML Runner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>" />
+<style>
+  /* ===== CSS VARIABLES ===== */
+  :root {
+    --bg-primary: #0d0d0f;
+    --bg-secondary: #13131a;
+    --bg-tertiary: #1a1a24;
+    --bg-glass: rgba(20,20,32,0.7);
+    --bg-glass2: rgba(30,30,48,0.6);
+    --border: rgba(120,120,200,0.13);
+    --border-active: rgba(120,120,255,0.35);
+    --accent: #7c6af7;
+    --accent2: #a78bfa;
+    --accent3: #6ee7b7;
+    --text-primary: #e8e8f4;
+    --text-secondary: #9191b8;
+    --text-muted: #5a5a80;
+    --error: #f87171;
+    --warning: #fbbf24;
+    --success: #34d399;
+    --info: #60a5fa;
+    --toolbar-h: 52px;
+    --statusbar-h: 26px;
+    --header-h: 38px;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+    --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  [data-theme="light"] {
+    --bg-primary: #f0f0fa;
+    --bg-secondary: #e8e8f6;
+    --bg-tertiary: #ddddf0;
+    --bg-glass: rgba(240,240,250,0.85);
+    --bg-glass2: rgba(220,220,240,0.75);
+    --border: rgba(100,100,180,0.18);
+    --border-active: rgba(100,100,220,0.4);
+    --accent: #5b4df0;
+    --accent2: #7c6af7;
+    --accent3: #059669;
+    --text-primary: #1a1a2e;
+    --text-secondary: #4a4a7a;
+    --text-muted: #8888bb;
+    --error: #dc2626;
+    --warning: #d97706;
+    --success: #059669;
+    --info: #2563eb;
+    --shadow: 0 8px 32px rgba(80,80,160,0.13);
+  }
+
+  /* ===== RESET ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+  ::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 4px; }
+
+  /* ===== LAYOUT ===== */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ===== TOP HEADER ===== */
+  #site-header {
+    height: var(--header-h);
+    background: linear-gradient(90deg, #1a0a3e 0%, #0d0d2e 50%, #0a1a30 100%);
+    border-bottom: 1px solid var(--border-active);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+  [data-theme="light"] #site-header {
+    background: linear-gradient(90deg, #e8e0ff 0%, #f0e8ff 50%, #e0eaff 100%);
+  }
+  #site-header .crown { font-size: 16px; }
+  #site-header .title-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: 0.5px;
+  }
+  #site-header .logo-area {
+    position: absolute;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #site-header .logo-icon { font-size: 18px; }
+  #site-header .logo-name {
+    font-size: 14px;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+  }
+  #site-header .kbd-hint {
+    position: absolute;
+    right: 16px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* ===== TOOLBAR ===== */
+  #toolbar {
+    height: var(--toolbar-h);
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 4px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  #toolbar::-webkit-scrollbar { height: 0; }
+
+  .tb-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: var(--bg-glass2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    user-select: none;
+  }
+  .tb-btn:hover {
+    background: rgba(124,106,247,0.15);
+    border-color: var(--accent);
+    color: var(--accent2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124,106,247,0.2);
+  }
+  .tb-btn:active { transform: translateY(0); }
+  .tb-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #5b4df0);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .tb-btn.primary:hover {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    box-shadow: 0 4px 16px rgba(124,106,247,0.4);
+  }
+  .tb-btn.active-mode {
+    background: linear-gradient(135deg, rgba(124,106,247,0.35), rgba(91,77,240,0.45));
+    border-color: var(--accent);
+    color: var(--accent2);
+    box-shadow: 0 0 12px rgba(124,106,247,0.35);
+  }
+  .tb-btn .tb-icon { font-size: 14px; }
+  .tb-sep { width: 1px; height: 28px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
+
+  /* ===== MAIN AREA ===== */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ===== EDITOR PANEL ===== */
+  #editor-panel {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    min-width: 200px;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  #editor-panel-header {
+    height: 32px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .panel-tab {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 2px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .panel-tab.active {
+    color: var(--accent2);
+    background: rgba(124,106,247,0.12);
+  }
+  #editor-wrap {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  #monaco-editor {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Error Console */
+  #error-console {
+    height: 0;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    transition: height 0.25s ease;
+    flex-shrink: 0;
+  }
+  #error-console.open { height: 160px; overflow: auto; }
+  #error-console-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  #error-console-header span { font-size: 11px; font-weight: 700; color: var(--error); }
+  #error-console-header button { font-size: 10px; cursor: pointer; color: var(--text-muted); background: none; border: none; padding: 2px 6px; }
+  .error-item {
+    padding: 5px 12px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .error-item.err { color: var(--error); }
+  .error-item.warn { color: var(--warning); }
+  .error-item.info { color: var(--info); }
+  .error-badge { font-size: 10px; background: var(--error); color: #fff; padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
+  .warn-badge { background: var(--warning); color: #000; }
+  .info-badge { background: var(--info); }
+  .console-toggle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 10;
+    font-size: 10px;
+    padding: 3px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 6px 0 0 0;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+
+  /* ===== SPLITTER ===== */
+  #splitter {
+    width: 5px;
+    background: var(--border);
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    z-index: 5;
+    position: relative;
+  }
+  #splitter:hover, #splitter.dragging { background: var(--accent); }
+
+  /* ===== PREVIEW PANEL ===== */
+  #preview-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 150px;
+    position: relative;
+  }
+  #preview-header {
+    height: 32px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  #preview-header .ph-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #edit-mode-indicator {
+    display: none;
+    font-size: 9px;
+    font-weight: 800;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  #edit-mode-indicator.show { display: inline-block; }
+  .ph-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+    background: var(--bg-glass2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  .ph-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+  /* Zoom Controls */
+  #zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  #zoom-level {
+    font-size: 10px;
+    color: var(--text-muted);
+    min-width: 35px;
+    text-align: center;
+    font-family: monospace;
+  }
+
+  #preview-wrap {
+    flex: 1;
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+  }
+  #preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    transform-origin: 0 0;
+    transition: transform 0.2s;
+  }
+  #preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 5;
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
+  #preview-overlay.hidden { opacity: 0; pointer-events: none; }
+  #preview-overlay .ov-icon { font-size: 48px; }
+  #preview-overlay p { color: var(--text-muted); font-size: 13px; }
+
+  /* ===== VISUAL EDITOR FLOATING PANEL ===== */
+  #visual-edit-panel {
+    position: absolute;
+    top: 40px;
+    right: 16px;
+    width: 320px;
+    max-width: calc(100% - 32px);
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-active);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #visual-edit-panel.show { display: flex; }
+  .ve-header {
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ve-header span { font-weight: 700; font-size: 12px; color: var(--accent2); }
+  .ve-close { background: none; border: none; color: var(--text-muted); font-size: 15px; cursor: pointer; }
+  .ve-close:hover { color: var(--text-primary); }
+  .ve-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+  }
+  .ve-meta {
+    background: var(--bg-tertiary);
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--border);
+  }
+  .ve-meta .tag-name { color: var(--accent3); font-weight: 700; }
+  .ve-meta .path-text { color: var(--text-muted); font-size: 10px; word-break: break-all; }
+  .ve-field { display: flex; flex-direction: column; gap: 4px; }
+  .ve-field label { font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; }
+  .ve-input-text {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+  }
+  .ve-input-text:focus { border-color: var(--accent); }
+  .ve-color-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ve-color-row input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: transparent;
+    padding: 0;
+  }
+  .ve-color-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  .ve-color-row input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border-active); border-radius: var(--radius-sm); }
+  .ve-hex-input {
+    flex: 1;
+    padding: 5px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  .ve-reset-btn {
+    padding: 5px 8px;
+    font-size: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .ve-reset-btn:hover { color: var(--text-primary); border-color: var(--accent2); }
+  .ve-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+  .ve-btn {
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-glass2);
+    color: var(--text-primary);
+    transition: all var(--transition);
+  }
+  .ve-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #5b4df0);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .ve-btn.primary:hover {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+  }
+
+  /* ===== STATUS BAR ===== */
+  #status-bar {
+    height: var(--statusbar-h);
+    background: var(--accent);
+    background: linear-gradient(90deg, #4c3bbf 0%, #3b29a8 100%);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 16px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  [data-theme="light"] #status-bar { background: linear-gradient(90deg, #5b4df0 0%, #4c3bbf 100%); }
+  .sb-item {
+    font-size: 10px;
+    color: rgba(255,255,255,0.8);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sb-item span { color: #fff; font-weight: 600; }
+  .sb-sep-v { width: 1px; height: 14px; background: rgba(255,255,255,0.2); }
+  #sb-right { margin-left: auto; display: flex; gap: 16px; align-items: center; }
+  #autosave-ind {
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .dot-pulse {
+    width: 6px; height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+
+  /* ===== FULLSCREEN PREVIEW ===== */
+  #fullscreen-modal {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+  }
+  #fullscreen-modal.open { display: flex; }
+  #fullscreen-bar {
+    height: 40px;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  #fullscreen-bar span { color: rgba(255,255,255,0.7); font-size: 12px; flex: 1; }
+  #fullscreen-bar button { padding: 4px 12px; background: #fff1; border: 1px solid #fff3; border-radius: 5px; color: #fff; font-size: 11px; cursor: pointer; }
+  #fullscreen-frame { flex: 1; border: none; background: #fff; }
+
+  /* ===== TOAST NOTIFICATIONS ===== */
+  #toast-container {
+    position: fixed;
+    bottom: 40px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    min-width: 240px;
+    max-width: 360px;
+    padding: 12px 16px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-active);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow);
+    animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    pointer-events: auto;
+  }
+  .toast.removing { animation: toastOut 0.25s ease forwards; }
+  .toast-icon { font-size: 16px; flex-shrink: 0; }
+  .toast-msg { font-size: 12px; font-weight: 500; color: var(--text-primary); flex: 1; }
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--error); }
+  .toast.warning { border-color: var(--warning); }
+  .toast.info { border-color: var(--info); }
+  @keyframes toastIn { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes toastOut { from{transform:translateX(0);opacity:1} to{transform:translateX(110%);opacity:0} }
+
+  /* ===== LOADER ===== */
+  #loader-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(13,13,15,0.9);
+    z-index: 99998;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  #loader-overlay.show { display: flex; }
+  .loader-spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { color: var(--text-secondary); font-size: 13px; }
+  .loader-progress {
+    width: 200px; height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .loader-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 2px;
+    animation: loadBar 1.5s ease-in-out infinite;
+  }
+  @keyframes loadBar { 0%{width:0%;margin-left:0} 50%{width:70%;margin-left:0} 100%{width:0%;margin-left:100%} }
+
+  /* ===== SETTINGS MODAL ===== */
+  #settings-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 9990;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #settings-modal.open { display: flex; }
+  .settings-box {
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-active);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes modalIn { from{transform:scale(0.92);opacity:0} to{transform:scale(1);opacity:1} }
+  .settings-head {
+    padding: 16px 20px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .settings-head h2 { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .settings-head .close-btn { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+  .settings-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .setting-row label { font-size: 13px; color: var(--text-secondary); }
+  .toggle {
+    width: 40px; height: 22px;
+    background: var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.25s;
+    border: none;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: left 0.25s;
+  }
+  .toggle.on::after { left: 21px; }
+  select.setting-sel {
+    padding: 4px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-primary);
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* ===== KEYBOARD SHORTCUTS OVERLAY ===== */
+  #shortcuts-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 9990;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #shortcuts-modal.open { display: flex; }
+  .shortcuts-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-active);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .shortcuts-box h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); }
+  .shortcut-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 20px; }
+  .shortcut-item:last-child { border-bottom: none; }
+  .shortcut-action { font-size: 12px; color: var(--text-secondary); }
+  .shortcut-keys { display: flex; gap: 4px; }
+  kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: monospace;
+    color: var(--text-primary);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    #main { flex-direction: column; }
+    #editor-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); height: 50%; }
+    #splitter { display: none; }
+    #preview-panel { height: 50%; }
+    .tb-btn .btn-label { display: none; }
+    .tb-btn { padding: 7px 9px; }
+    #visual-edit-panel { top: 10px; right: 10px; left: 10px; width: auto; }
+  }
+  @media (max-width: 480px) {
+    #site-header .kbd-hint { display: none; }
+    #toolbar { gap: 3px; padding: 0 8px; }
+  }
+
+  /* Animate hidden/show for error console toggle button */
+  #console-count {
+    display: inline-block;
+    min-width: 16px;
+    height: 16px;
+    background: var(--error);
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    line-height: 16px;
+    padding: 0 4px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="site-header">
+    <div class="logo-area">
+      <span class="logo-icon">🚀</span>
+      <span class="logo-name">HTML RUNNER</span>
+    </div>
+    <span class="crown">👑</span>
+    <span class="title-text">This website is made by Naitik Jain</span>
+    <span class="kbd-hint">Press ? for shortcuts</span>
+  </header>
+
+  <!-- TOOLBAR -->
+  <div id="toolbar" role="toolbar" aria-label="Main toolbar">
+    <button class="tb-btn" id="btn-upload" title="Upload File (Ctrl+O)" aria-label="Upload file">
+      <span class="tb-icon">📂</span><span class="btn-label">Upload</span>
+    </button>
+    <button class="tb-btn" id="btn-download" title="Download Code (Ctrl+S)" aria-label="Download code">
+      <span class="tb-icon">💾</span><span class="btn-label">Download</span>
+    </button>
+    <button class="tb-btn" id="btn-copy" title="Copy Code (Ctrl+Shift+C)" aria-label="Copy code">
+      <span class="tb-icon">📋</span><span class="btn-label">Copy</span>
+    </button>
+
+    <div class="tb-sep" role="separator"></div>
+
+    <button class="tb-btn primary" id="btn-run" title="Run Code (Ctrl+Enter)" aria-label="Run code">
+      <span class="tb-icon">▶</span><span class="btn-label">Run</span>
+    </button>
+    <button class="tb-btn" id="btn-refresh" title="Refresh Preview (Ctrl+R)" aria-label="Refresh preview">
+      <span class="tb-icon">🔄</span><span class="btn-label">Refresh</span>
+    </button>
+    <button class="tb-btn" id="btn-visual-edit" title="Toggle Visual Edit Mode (Ctrl+Shift+E)" aria-label="Toggle visual edit mode">
+      <span class="tb-icon">✏️</span><span class="btn-label" id="btn-visual-edit-label">Edit</span>
+    </button>
+
+    <div class="tb-sep" role="separator"></div>
+
+    <button class="tb-btn" id="btn-console" title="Toggle Error Console" aria-label="Toggle error console">
+      <span class="tb-icon">🐛</span><span class="btn-label">Console</span>
+      <span id="console-count" style="display:none">0</span>
+    </button>
+    <button class="tb-btn" id="btn-settings" title="Settings" aria-label="Settings">
+      <span class="tb-icon">⚙️</span><span class="btn-label">Settings</span>
+    </button>
+    <button class="tb-btn" id="btn-theme" title="Toggle Theme" aria-label="Toggle dark/light theme">
+      <span class="tb-icon" id="theme-icon">🌙</span><span class="btn-label">Theme</span>
+    </button>
+    <button class="tb-btn" id="btn-shortcuts" title="Keyboard Shortcuts (?)" aria-label="Show keyboard shortcuts">
+      <span class="tb-icon">⌨️</span><span class="btn-label">Shortcuts</span>
+    </button>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div id="main">
+    <!-- EDITOR PANEL -->
+    <div id="editor-panel">
+      <div id="editor-panel-header">
+        <span class="panel-tab active" id="tab-editor">📝 Editor</span>
+        <span style="font-size:11px;color:var(--text-muted);margin-left:auto;" id="file-name-tag">index.html</span>
+      </div>
+      <div id="editor-wrap">
+        <div id="monaco-editor" aria-label="Code editor"></div>
+      </div>
+      <button class="console-toggle" id="console-toggle-btn" aria-label="Toggle error console">
+        🐛 Console <span id="console-count2"></span>
+      </button>
+      <div id="error-console" role="log" aria-label="Error console">
+        <div id="error-console-header">
+          <span>⚠ Error Console</span>
+          <button onclick="clearConsole()" aria-label="Clear console">Clear</button>
+        </div>
+        <div id="console-items"></div>
+      </div>
+    </div>
+
+    <!-- SPLITTER -->
+    <div id="splitter" role="separator" aria-orientation="vertical" aria-label="Resize panels"></div>
+
+    <!-- PREVIEW PANEL -->
+    <div id="preview-panel">
+      <div id="preview-header">
+        <span class="ph-title">
+          <span>🖥 Live Preview</span>
+          <span id="edit-mode-indicator">Visual Edit Active</span>
+        </span>
+        <div id="zoom-controls">
+          <button class="ph-btn" id="zoom-out" title="Zoom Out" aria-label="Zoom out">−</button>
+          <span id="zoom-level">100%</span>
+          <button class="ph-btn" id="zoom-in" title="Zoom In" aria-label="Zoom in">+</button>
+          <button class="ph-btn" id="zoom-reset" title="Reset Zoom" aria-label="Reset zoom">⟳</button>
+        </div>
+        <button class="ph-btn" id="btn-newtab" title="Open in New Tab" aria-label="Open preview in new tab">↗ New Tab</button>
+        <button class="ph-btn" id="btn-fullscreen" title="Fullscreen (Ctrl+Shift+F)" aria-label="Fullscreen preview">⛶ Full</button>
+      </div>
+      <div id="preview-wrap">
+        <div id="preview-overlay">
+          <div class="ov-icon">🖥️</div>
+          <p>Press <strong>▶ Run</strong> or <kbd>Ctrl+Enter</kbd> to preview</p>
+        </div>
+        <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups" title="Code preview"></iframe>
+
+        <!-- VISUAL EDITOR PANEL -->
+        <div id="visual-edit-panel" role="region" aria-label="Visual Editor">
+          <div class="ve-header">
+            <span>✏️ Visual Element Editor</span>
+            <button class="ve-close" id="ve-close" aria-label="Close visual editor">✕</button>
+          </div>
+          <div class="ve-body">
+            <div class="ve-meta">
+              <div>Element: <span class="tag-name" id="ve-tag-name">h1</span></div>
+              <div class="path-text" id="ve-path-text">body &gt; h1:nth-of-type(1)</div>
+            </div>
+
+            <div class="ve-field" id="ve-text-group">
+              <label for="ve-text-input">Text / Value Content</label>
+              <textarea class="ve-input-text" id="ve-text-input" rows="2" placeholder="Text content"></textarea>
+            </div>
+
+            <div class="ve-field">
+              <label>Text Color</label>
+              <div class="ve-color-row">
+                <input type="color" id="ve-color-picker" aria-label="Text color picker" />
+                <input type="text" class="ve-hex-input" id="ve-color-hex" placeholder="#ffffff" aria-label="Text hex color" />
+                <button type="button" class="ve-reset-btn" id="ve-color-reset">Reset</button>
+              </div>
+            </div>
+
+            <div class="ve-field">
+              <label>Background Color</label>
+              <div class="ve-color-row">
+                <input type="color" id="ve-bg-picker" aria-label="Background color picker" />
+                <input type="text" class="ve-hex-input" id="ve-bg-hex" placeholder="transparent" aria-label="Background hex color" />
+                <button type="button" class="ve-reset-btn" id="ve-bg-reset">Reset</button>
+              </div>
+            </div>
+
+            <div class="ve-actions">
+              <button type="button" class="ve-btn" id="ve-cancel-btn">Cancel</button>
+              <button type="button" class="ve-btn primary" id="ve-apply-btn">Apply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="status-bar" role="status" aria-label="Status bar">
+    <div class="sb-item">Ln <span id="sb-line">1</span></div>
+    <div class="sb-sep-v"></div>
+    <div class="sb-item">Col <span id="sb-col">1</span></div>
+    <div class="sb-sep-v"></div>
+    <div class="sb-item">Lang <span id="sb-lang">HTML</span></div>
+    <div class="sb-sep-v"></div>
+    <div class="sb-item">Size <span id="sb-size">0 B</span></div>
+    <div class="sb-sep-v"></div>
+    <div class="sb-item">Chars <span id="sb-chars">0</span></div>
+    <div id="sb-right">
+      <div id="autosave-ind">
+        <div class="dot-pulse"></div>
+        Auto Save
+      </div>
+      <div class="sb-item">Pos <span id="sb-pos">1:1</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FULLSCREEN MODAL -->
+<div id="fullscreen-modal" role="dialog" aria-modal="true" aria-label="Fullscreen preview">
+  <div id="fullscreen-bar">
+    <span>🖥 HTML Runner — Fullscreen Preview</span>
+    <button id="fs-newtab" aria-label="Open in new tab">↗ New Tab</button>
+    <button id="fs-close" aria-label="Close fullscreen">✕ Close</button>
+  </div>
+  <iframe id="fullscreen-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups" title="Fullscreen preview"></iframe>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" role="dialog" aria-modal="true" aria-label="Settings" aria-hidden="true">
+  <div class="settings-box">
+    <div class="settings-head">
+      <h2>⚙️ Settings</h2>
+      <button class="close-btn" id="settings-close" aria-label="Close settings">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="setting-row">
+        <label>Word Wrap</label>
+        <button class="toggle on" id="toggle-wrap" role="switch" aria-checked="true" aria-label="Toggle word wrap"></button>
+      </div>
+      <div class="setting-row">
+        <label>Minimap</label>
+        <button class="toggle on" id="toggle-minimap" role="switch" aria-checked="true" aria-label="Toggle minimap"></button>
+      </div>
+      <div class="setting-row">
+        <label>Line Numbers</label>
+        <button class="toggle on" id="toggle-lineno" role="switch" aria-checked="true" aria-label="Toggle line numbers"></button>
+      </div>
+      <div class="setting-row">
+        <label>Auto Save</label>
+        <button class="toggle on" id="toggle-autosave" role="switch" aria-checked="true" aria-label="Toggle auto save"></button>
+      </div>
+      <div class="setting-row">
+        <label>Live Preview (auto-run on type)</label>
+        <button class="toggle" id="toggle-live" role="switch" aria-checked="false" aria-label="Toggle live preview"></button>
+      </div>
+      <div class="setting-row">
+        <label>Font Size</label>
+        <select class="setting-sel" id="font-size-sel" aria-label="Font size">
+          <option value="12">12px</option>
+          <option value="13" selected>13px</option>
+          <option value="14">14px</option>
+          <option value="16">16px</option>
+          <option value="18">18px</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>Tab Size</label>
+        <select class="setting-sel" id="tab-size-sel" aria-label="Tab size">
+          <option value="2" selected>2 Spaces</option>
+          <option value="4">4 Spaces</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUTS MODAL -->
+<div id="shortcuts-modal" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" aria-hidden="true">
+  <div class="shortcuts-box">
+    <h2>⌨️ Keyboard Shortcuts</h2>
+    <div class="shortcut-item"><span class="shortcut-action">Run Code</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Download Code</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>S</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Upload File</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>O</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Copy Code</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Refresh Preview</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>R</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Toggle Visual Edit</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>E</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Fullscreen Preview</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>F</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Undo</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Z</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Redo</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Y</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Show Shortcuts</span><div class="shortcut-keys"><kbd>?</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Toggle Theme</span><div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>T</kbd></div></div>
+    <div class="shortcut-item"><span class="shortcut-action">Close Modal / Selection</span><div class="shortcut-keys"><kbd>Esc</kbd></div></div>
+    <div style="margin-top:16px;text-align:right;">
+      <button onclick="closeShortcuts()" style="padding:6px 16px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container" aria-live="polite" aria-label="Notifications"></div>
+
+<!-- LOADER -->
+<div id="loader-overlay" role="status" aria-label="Loading">
+  <div class="loader-spinner"></div>
+  <div class="loader-text" id="loader-text">Processing...</div>
+  <div class="loader-progress"><div class="loader-bar"></div></div>
+</div>
+
+<!-- HIDDEN UPLOAD INPUT -->
+<input type="file" id="file-input" accept=".html,.css,.js,.txt" style="display:none" aria-hidden="true" />
+
+<!-- MONACO EDITOR LOADER -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+<script>
+'use strict';
+
+// ===== GLOBALS =====
+let monacoEditor = null;
+let monacoModule = null;
+let currentTheme = 'dark';
+let previewZoom = 100;
+let autoSaveEnabled = true;
+let livePreviewEnabled = false;
+let autoSaveTimer = null;
+let consoleErrors = 0;
+
+// Visual Edit State
+let visualEditMode = false;
+let selectedPreviewElement = null;
+let originalPreviewState = {
+  text: '',
+  color: '',
+  backgroundColor: '',
+  isInput: false
+};
+let isDirectTextElement = true;
+
+const DEFAULT_CODE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hello World</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 48px 64px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+    }
+    h1 { font-size: 3rem; margin-bottom: 12px; }
+    p { font-size: 1.1rem; opacity: 0.9; }
+    .badge {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 6px 18px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🚀 Hello World!</h1>
+    <p>Welcome to HTML Runner by Naitik Jain</p>
+    <span class="badge">Edit code in the editor → Press Run ▶</span>
+  </div>
+</body>
+</html>`;
+
+// ===== INIT MONACO =====
+require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+
+require(['vs/editor/editor.main'], function (monaco) {
+  monacoModule = monaco;
+
+  // Define custom dark theme
+  monaco.editor.defineTheme('htmlrunner-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'tag', foreground: 'f28b82' },
+      { token: 'attribute.name', foreground: 'a8c7fa' },
+      { token: 'attribute.value', foreground: 'a8ff8a' },
+      { token: 'comment', foreground: '5f6368', fontStyle: 'italic' },
+      { token: 'string', foreground: 'f8bbd9' },
+    ],
+    colors: {
+      'editor.background': '#0d0d14',
+      'editor.foreground': '#e8e8f4',
+      'editor.lineHighlightBackground': '#1a1a28',
+      'editorLineNumber.foreground': '#404060',
+      'editorLineNumber.activeForeground': '#7c6af7',
+      'editor.selectionBackground': '#3b2f7f55',
+      'editorCursor.foreground': '#a78bfa',
+      'editorWhitespace.foreground': '#2a2a40',
+    }
+  });
+
+  monaco.editor.defineTheme('htmlrunner-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background': '#f5f5ff',
+      'editor.foreground': '#1a1a2e',
+      'editorLineNumber.foreground': '#9999bb',
+      'editorLineNumber.activeForeground': '#5b4df0',
+      'editorCursor.foreground': '#5b4df0',
+    }
+  });
+
+  const savedCode = localStorage.getItem('htmlrunner_code') || DEFAULT_CODE;
+
+  monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
+    value: savedCode,
+    language: 'html',
+    theme: 'htmlrunner-dark',
+    fontSize: 13,
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+    fontLigatures: true,
+    lineNumbers: 'on',
+    minimap: { enabled: true },
+    wordWrap: 'on',
+    autoClosingBrackets: 'always',
+    autoClosingQuotes: 'always',
+    autoIndent: 'full',
+    matchBrackets: 'always',
+    formatOnPaste: true,
+    formatOnType: true,
+    tabSize: 2,
+    insertSpaces: true,
+    scrollBeyondLastLine: false,
+    renderLineHighlight: 'all',
+    cursorBlinking: 'smooth',
+    cursorSmoothCaretAnimation: 'on',
+    smoothScrolling: true,
+    mouseWheelZoom: true,
+    find: { addExtraSpaceOnTop: false },
+    suggestOnTriggerCharacters: true,
+    quickSuggestions: { other: true, comments: false, strings: true },
+    accessibilitySupport: 'auto',
+    semanticHighlighting: { enabled: true },
+  });
+
+  // Cursor position → status bar
+  monacoEditor.onDidChangeCursorPosition(e => {
+    document.getElementById('sb-line').textContent = e.position.lineNumber;
+    document.getElementById('sb-col').textContent = e.position.column;
+    document.getElementById('sb-pos').textContent = `${e.position.lineNumber}:${e.position.column}`;
+  });
+
+  // Content change
+  monacoEditor.onDidChangeModelContent(() => {
+    updateStatusBar();
+    scheduleAutoSave();
+    if (livePreviewEnabled) runPreviewDebounced();
+    detectLanguage();
+  });
+
+  // Resize observer
+  const resizeObs = new ResizeObserver(() => monacoEditor.layout());
+  resizeObs.observe(document.getElementById('editor-wrap'));
+
+  updateStatusBar();
+  detectLanguage();
+  setupIntelliSense();
+  runPreview();
+  console.log('%c🚀 HTML Runner Ready!', 'color:#7c6af7;font-size:14px;font-weight:bold;');
+});
+
+// ===== DETECT LANGUAGE =====
+function detectLanguage() {
+  if (!monacoEditor || !monacoModule) return;
+  const code = monacoEditor.getValue();
+  let lang = 'html';
+  if (code.trim().startsWith('{') || code.trim().startsWith('[')) lang = 'json';
+  else if (/^\s*(function|const|let|var|import|export|class)\s/.test(code) && !/<html|<!DOCTYPE/i.test(code)) lang = 'javascript';
+  else if (/<\?php/.test(code)) lang = 'php';
+  else if (/^\/\*/.test(code.trim()) && !/</.test(code)) lang = 'css';
+  document.getElementById('sb-lang').textContent = lang.toUpperCase();
+  monacoModule.editor.setModelLanguage(monacoEditor.getModel(), lang);
+}
+
+// ===== SETUP INTELLISENSE =====
+function setupIntelliSense() {
+  if (!monacoModule) return;
+  monacoModule.languages.html.htmlDefaults.setOptions({
+    format: { indentInnerHtml: true, wrapLineLength: 120 },
+    suggest: { html5: true },
+    validate: true,
+  });
+}
+
+// ===== STATUS BAR =====
+function updateStatusBar() {
+  if (!monacoEditor) return;
+  const code = monacoEditor.getValue();
+  const chars = code.length;
+  const bytes = new Blob([code]).size;
+  document.getElementById('sb-chars').textContent = chars.toLocaleString();
+  document.getElementById('sb-size').textContent = formatBytes(bytes);
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+// ===== AUTO SAVE =====
+function scheduleAutoSave() {
+  if (!autoSaveEnabled) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    if (monacoEditor) {
+      localStorage.setItem('htmlrunner_code', monacoEditor.getValue());
+    }
+  }, 800);
+}
+
+// ===== RUN PREVIEW =====
+let previewDebounceTimer = null;
+function runPreviewDebounced() {
+  clearTimeout(previewDebounceTimer);
+  previewDebounceTimer = setTimeout(runPreview, 600);
+}
+
+function runPreview() {
+  if (!monacoEditor) return;
+  const code = monacoEditor.getValue();
+  const frame = document.getElementById('preview-frame');
+  const overlay = document.getElementById('preview-overlay');
+  const fs_frame = document.getElementById('fullscreen-frame');
+
+  overlay.classList.add('hidden');
+  clearConsole();
+  clearVisualSelection(false);
+
+  try {
+    const blob = new Blob([code], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+
+    // Revoke old URL
+    if (frame._blobUrl) URL.revokeObjectURL(frame._blobUrl);
+    frame._blobUrl = url;
+    frame.src = url;
+
+    if (fs_frame && document.getElementById('fullscreen-modal').classList.contains('open')) {
+      if (fs_frame._blobUrl) URL.revokeObjectURL(fs_frame._blobUrl);
+      const url2 = URL.createObjectURL(blob);
+      fs_frame._blobUrl = url2;
+      fs_frame.src = url2;
+    }
+
+    // Error listening & visual editor attach
+    frame.onload = function () {
+      try {
+        const win = frame.contentWindow;
+        if (win) {
+          win.onerror = function (msg, src, line, col) {
+            addConsoleItem('error', `${msg} (line ${line}, col ${col})`);
+            return true;
+          };
+          win.addEventListener('unhandledrejection', e => {
+            addConsoleItem('error', `Unhandled Promise Rejection: ${e.reason}`);
+          });
+        }
+      } catch (e) { /* cross-origin restriction ok */ }
+
+      if (visualEditMode) {
+        attachVisualEditorToPreview();
+      }
+    };
+
+    setPreviewZoom(previewZoom);
+    analyzeHTMLErrors(code);
+  } catch (e) {
+    addConsoleItem('error', 'Preview failed: ' + e.message);
+  }
+}
+
+function refreshPreview() {
+  const frame = document.getElementById('preview-frame');
+  if (frame.src && frame.src !== 'about:blank') {
+    frame.src = frame.src;
+    showToast('Preview refreshed', 'success', '🔄');
+  } else {
+    runPreview();
+  }
+}
+
+// ===== HTML ERROR ANALYSIS =====
+function analyzeHTMLErrors(code) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(code, 'text/html');
+  const errors = doc.querySelectorAll('parsererror');
+  errors.forEach(e => addConsoleItem('error', e.textContent.trim().substring(0, 200)));
+
+  // Basic validations
+  if (!/<html/i.test(code)) addConsoleItem('warn', 'Missing <html> tag');
+  if (!/<head/i.test(code)) addConsoleItem('warn', 'Missing <head> tag');
+  if (!/<body/i.test(code)) addConsoleItem('warn', 'Missing <body> tag');
+  if (!/<title/i.test(code)) addConsoleItem('info', 'No <title> tag found');
+
+  // Unclosed tags basic check
+  const openTags = (code.match(/<[a-z][^\/!>]*>/gi) || []).length;
+  const closeTags = (code.match(/<\/[a-z][^>]*>/gi) || []).length;
+  if (Math.abs(openTags - closeTags) > 2) {
+    addConsoleItem('warn', `Possible unclosed tags detected (open: ${openTags}, close: ${closeTags})`);
+  }
+}
+
+// ===== CONSOLE PANEL =====
+function addConsoleItem(type, msg) {
+  const container = document.getElementById('console-items');
+  const item = document.createElement('div');
+  item.className = `error-item ${type}`;
+  const badgeMap = { error: 'ERROR', warn: 'WARN', info: 'INFO' };
+  const badgeClass = { error: 'error-badge', warn: 'error-badge warn-badge', info: 'error-badge info-badge' };
+  item.innerHTML = `<span class="${badgeClass[type]}">${badgeMap[type]}</span><span>${escapeHtml(msg)}</span>`;
+  container.appendChild(item);
+  consoleErrors++;
+  const el = document.getElementById('console-count');
+  const el2 = document.getElementById('console-count2');
+  el.style.display = 'inline-block';
+  el.textContent = consoleErrors;
+  if (el2) el2.textContent = ` (${consoleErrors})`;
+}
+
+function clearConsole() {
+  document.getElementById('console-items').innerHTML = '';
+  consoleErrors = 0;
+  const el = document.getElementById('console-count');
+  el.style.display = 'none';
+  const el2 = document.getElementById('console-count2');
+  if (el2) el2.textContent = '';
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str));
+  return d.innerHTML;
+}
+
+// ===== ZOOM =====
+function setPreviewZoom(pct) {
+  previewZoom = Math.max(25, Math.min(200, pct));
+  const frame = document.getElementById('preview-frame');
+  const scale = previewZoom / 100;
+  frame.style.transform = `scale(${scale})`;
+  frame.style.width = (100 / scale) + '%';
+  frame.style.height = (100 / scale) + '%';
+  document.getElementById('zoom-level').textContent = previewZoom + '%';
+}
+
+// ===== UPLOAD =====
+function triggerUpload() {
+  document.getElementById('file-input').click();
+}
+
+document.getElementById('file-input').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 100);
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('File too large (max 5MB)', 'error', '⚠');
+    return;
+  }
+  showLoader('Reading file...');
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    if (monacoEditor) {
+      monacoEditor.setValue(ev.target.result);
+      document.getElementById('file-name-tag').textContent = safeName;
+      scheduleAutoSave();
+      detectLanguage();
+      runPreview();
+    }
+    hideLoader();
+    showToast(`Upload Completed: ${safeName}`, 'success', '📂');
+  };
+  reader.onerror = function () {
+    hideLoader();
+    showToast('Failed to read file', 'error', '⚠');
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ===== DOWNLOAD =====
+function downloadCode() {
+  if (!monacoEditor) return;
+  const code = monacoEditor.getValue();
+  const blob = new Blob([code], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'index.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Downloaded Successfully', 'success', '💾');
+}
+
+// ===== COPY =====
+async function copyCode() {
+  if (!monacoEditor) return;
+  const code = monacoEditor.getValue();
+  try {
+    await navigator.clipboard.writeText(code);
+    showToast('Copied Successfully', 'success', '📋');
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = code;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Copied Successfully', 'success', '📋');
+  }
+}
+
+// ===== FULLSCREEN =====
+function openFullscreen() {
+  const modal = document.getElementById('fullscreen-modal');
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  if (monacoEditor) {
+    const code = monacoEditor.getValue();
+    const fs_frame = document.getElementById('fullscreen-frame');
+    const blob = new Blob([code], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    if (fs_frame._blobUrl) URL.revokeObjectURL(fs_frame._blobUrl);
+    fs_frame._blobUrl = url;
+    fs_frame.src = url;
+  }
+  document.getElementById('fs-close').focus();
+}
+
+function closeFullscreen() {
+  const modal = document.getElementById('fullscreen-modal');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  const fs_frame = document.getElementById('fullscreen-frame');
+  if (fs_frame && fs_frame._blobUrl) URL.revokeObjectURL(fs_frame._blobUrl);
+  if (fs_frame) fs_frame.src = 'about:blank';
+}
+
+// ===== NEW TAB =====
+function openInNewTab() {
+  if (!monacoEditor) return;
+  const code = monacoEditor.getValue();
+  const blob = new Blob([code], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  showToast('Opened in new tab', 'info', '↗');
+}
+
+// ===== THEME =====
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  document.getElementById('theme-icon').textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+  if (monacoEditor) {
+    monacoModule.editor.setTheme(currentTheme === 'dark' ? 'htmlrunner-dark' : 'htmlrunner-light');
+  }
+  localStorage.setItem('htmlrunner_theme', currentTheme);
+  showToast(`${currentTheme === 'dark' ? 'Dark' : 'Light'} Mode`, 'info', currentTheme === 'dark' ? '🌙' : '☀️');
+}
+
+(function () {
+  const saved = localStorage.getItem('htmlrunner_theme');
+  if (saved) {
+    currentTheme = saved;
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-icon').textContent = saved === 'dark' ? '🌙' : '☀️';
+  }
+})();
+
+// ===== SETTINGS =====
+function openSettings() {
+  const m = document.getElementById('settings-modal');
+  m.classList.add('open');
+  m.setAttribute('aria-hidden', 'false');
+  document.getElementById('settings-close').focus();
+}
+function closeSettings() {
+  const m = document.getElementById('settings-modal');
+  m.classList.remove('open');
+  m.setAttribute('aria-hidden', 'true');
+}
+
+function makeToggle(id, handler) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    const on = this.classList.toggle('on');
+    this.setAttribute('aria-checked', on ? 'true' : 'false');
+    handler(on);
+  });
+}
+
+makeToggle('toggle-wrap', on => {
+  if (monacoEditor) monacoEditor.updateOptions({ wordWrap: on ? 'on' : 'off' });
+  showToast(`Word Wrap ${on ? 'On' : 'Off'}`, 'info', '↩');
+});
+makeToggle('toggle-minimap', on => {
+  if (monacoEditor) monacoEditor.updateOptions({ minimap: { enabled: on } });
+});
+makeToggle('toggle-lineno', on => {
+  if (monacoEditor) monacoEditor.updateOptions({ lineNumbers: on ? 'on' : 'off' });
+});
+makeToggle('toggle-autosave', on => {
+  autoSaveEnabled = on;
+  showToast(`Auto Save ${on ? 'On' : 'Off'}`, 'info', '💾');
+});
+makeToggle('toggle-live', on => {
+  livePreviewEnabled = on;
+  showToast(`Live Preview ${on ? 'On' : 'Off'}`, 'info', '⚡');
+});
+
+document.getElementById('font-size-sel').addEventListener('change', function () {
+  if (monacoEditor) monacoEditor.updateOptions({ fontSize: parseInt(this.value, 10) });
+});
+document.getElementById('tab-size-sel').addEventListener('change', function () {
+  if (monacoEditor) monacoEditor.updateOptions({ tabSize: parseInt(this.value, 10) });
+});
+
+// ===== SHORTCUTS MODAL =====
+function openShortcuts() {
+  const m = document.getElementById('shortcuts-modal');
+  m.classList.add('open');
+  m.setAttribute('aria-hidden', 'false');
+}
+function closeShortcuts() {
+  const m = document.getElementById('shortcuts-modal');
+  m.classList.remove('open');
+  m.setAttribute('aria-hidden', 'true');
+}
+
+// ===== TOAST SYSTEM =====
+function showToast(msg, type = 'info', icon = '✔') {
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="toast-icon">${icon || icons[type]}</span><span class="toast-msg">${escapeHtml(msg)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => { toast.remove(); }, 260);
+  }, 3000);
+}
+
+// ===== LOADER =====
+function showLoader(text = 'Loading...') {
+  document.getElementById('loader-text').textContent = text;
+  document.getElementById('loader-overlay').classList.add('show');
+}
+function hideLoader() {
+  document.getElementById('loader-overlay').classList.remove('show');
+}
+
+// ===== SPLITTER DRAG =====
+(function () {
+  const splitter = document.getElementById('splitter');
+  const editorPanel = document.getElementById('editor-panel');
+  const main = document.getElementById('main');
+  let dragging = false;
+  let startX, startW;
+
+  splitter.addEventListener('mousedown', function (e) {
+    dragging = true;
+    startX = e.clientX;
+    startW = editorPanel.offsetWidth;
+    splitter.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (!dragging) return;
+    const newW = Math.max(200, Math.min(startW + (e.clientX - startX), main.offsetWidth - 200));
+    editorPanel.style.width = newW + 'px';
+    if (monacoEditor) monacoEditor.layout();
+  });
+
+  document.addEventListener('mouseup', function () {
+    if (!dragging) return;
+    dragging = false;
+    splitter.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+
+  // Touch support
+  splitter.addEventListener('touchstart', function (e) {
+    const t = e.touches[0];
+    dragging = true;
+    startX = t.clientX;
+    startW = editorPanel.offsetWidth;
+    splitter.classList.add('dragging');
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function (e) {
+    if (!dragging) return;
+    const t = e.touches[0];
+    const newW = Math.max(200, Math.min(startW + (t.clientX - startX), main.offsetWidth - 200));
+    editorPanel.style.width = newW + 'px';
+    if (monacoEditor) monacoEditor.layout();
+  }, { passive: true });
+
+  document.addEventListener('touchend', function () {
+    dragging = false;
+    splitter.classList.remove('dragging');
+  });
+})();
+
+// =============================================================================
+// ===== VISUAL PREVIEW EDITING SYSTEM ========================================
+// =============================================================================
+
+function toggleVisualEditMode() {
+  visualEditMode = !visualEditMode;
+  const btn = document.getElementById('btn-visual-edit');
+  const label = document.getElementById('btn-visual-edit-label');
+  const indicator = document.getElementById('edit-mode-indicator');
+
+  if (visualEditMode) {
+    btn.classList.add('active-mode');
+    label.textContent = 'Editing';
+    indicator.classList.add('show');
+    attachVisualEditorToPreview();
+    showToast('Visual Edit Mode enabled — click an element in Preview', 'info', '✏️');
+  } else {
+    btn.classList.remove('active-mode');
+    label.textContent = 'Edit';
+    indicator.classList.remove('show');
+    clearVisualSelection(true);
+    detachVisualEditorFromPreview();
+    showToast('Visual Edit Mode disabled', 'info', '✖');
+  }
+}
+
+function isEditablePreviewElement(el) {
+  if (!el || el.nodeType !== Node.ELEMENT_NODE) return false;
+  const tag = el.tagName.toLowerCase();
+  const ignoredTags = ['html', 'head', 'style', 'script', 'meta', 'link', 'title', 'noscript'];
+  if (ignoredTags.includes(tag)) return false;
+  if (el.classList && el.classList.contains('__htmlrunner-hover-tooltip')) return false;
+  return true;
+}
+
+// Sibling index helper
+function getElementSiblingIndex(el) {
+  let index = 1;
+  let sib = el.previousElementSibling;
+  while (sib) {
+    if (sib.tagName === el.tagName) {
+      index++;
+    }
+    sib = sib.previousElementSibling;
+  }
+  return index;
+}
+
+// Build structural path
+function getElementPath(el) {
+  if (!el || !el.parentElement || el.tagName.toLowerCase() === 'html') return 'html';
+  if (el.tagName.toLowerCase() === 'body') return 'body';
+
+  const parts = [];
+  let curr = el;
+  while (curr && curr.parentElement && curr.tagName.toLowerCase() !== 'html') {
+    const tag = curr.tagName.toLowerCase();
+    if (tag === 'body') {
+      parts.unshift('body');
+      break;
+    }
+    const idx = getElementSiblingIndex(curr);
+    parts.unshift(`${tag}:nth-of-type(${idx})`);
+    curr = curr.parentElement;
+  }
+  return parts.join(' > ');
+}
+
+// Find element by path in another document
+function findElementByPath(doc, path) {
+  if (!doc) return null;
+  try {
+    return doc.querySelector(path);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Clean helper style injection
+function ensureEditorStylesInIframe(doc) {
+  let styleEl = doc.getElementById('__htmlrunner_edit_styles');
+  if (!styleEl) {
+    styleEl = doc.createElement('style');
+    styleEl.id = '__htmlrunner_edit_styles';
+    styleEl.textContent = `
+      .__htmlrunner-hovered {
+        outline: 2px dashed #7c6af7 !important;
+        outline-offset: 2px !important;
+        cursor: pointer !important;
+      }
+      .__htmlrunner-selected {
+        outline: 2px solid #7c6af7 !important;
+        outline-offset: 2px !important;
+      }
+    `;
+    (doc.head || doc.documentElement).appendChild(styleEl);
+  }
+
+  let tooltipEl = doc.getElementById('__htmlrunner_tooltip');
+  if (!tooltipEl) {
+    tooltipEl = doc.createElement('div');
+    tooltipEl.id = '__htmlrunner_tooltip';
+    tooltipEl.className = '__htmlrunner-hover-tooltip';
+    tooltipEl.style.cssText = `
+      position: fixed;
+      z-index: 2147483647;
+      background: rgba(20, 20, 32, 0.88);
+      color: #a78bfa;
+      padding: 3px 7px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      border-radius: 4px;
+      pointer-events: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      display: none;
+      white-space: nowrap;
+      border: 1px solid rgba(124, 106, 247, 0.4);
+    `;
+    (doc.body || doc.documentElement).appendChild(tooltipEl);
+  }
+}
+
+function removeEditorStylesInIframe(doc) {
+  if (!doc) return;
+  const styleEl = doc.getElementById('__htmlrunner_edit_styles');
+  if (styleEl) styleEl.remove();
+  const tooltipEl = doc.getElementById('__htmlrunner_tooltip');
+  if (tooltipEl) tooltipEl.remove();
+  doc.querySelectorAll('.__htmlrunner-hovered').forEach(el => el.classList.remove('__htmlrunner-hovered'));
+  doc.querySelectorAll('.__htmlrunner-selected').forEach(el => el.classList.remove('__htmlrunner-selected'));
+}
+
+// Listeners inside iframe
+let iframeDocRef = null;
+let boundIframeClick = null;
+let boundIframeOver = null;
+let boundIframeOut = null;
+
+function detachVisualEditorFromPreview() {
+  if (iframeDocRef) {
+    try {
+      if (boundIframeClick) iframeDocRef.removeEventListener('click', boundIframeClick, true);
+      if (boundIframeOver) iframeDocRef.removeEventListener('mouseover', boundIframeOver, true);
+      if (boundIframeOut) iframeDocRef.removeEventListener('mouseout', boundIframeOut, true);
+      removeEditorStylesInIframe(iframeDocRef);
+    } catch (e) { /* ignore detached frames */ }
+  }
+  iframeDocRef = null;
+}
+
+function attachVisualEditorToPreview() {
+  const frame = document.getElementById('preview-frame');
+  if (!frame || !frame.contentDocument) return;
+
+  const doc = frame.contentDocument;
+  detachVisualEditorFromPreview();
+  iframeDocRef = doc;
+  ensureEditorStylesInIframe(doc);
+
+  const tooltipEl = doc.getElementById('__htmlrunner_tooltip');
+
+  boundIframeOver = function (e) {
+    if (!visualEditMode) return;
+    const target = e.target;
+    if (!isEditablePreviewElement(target)) return;
+
+    target.classList.add('__htmlrunner-hovered');
+    if (tooltipEl) {
+      let desc = target.tagName.toLowerCase();
+      if (target.id) desc += '#' + target.id;
+      else if (target.classList && target.classList.length > 0) {
+        const cls = Array.from(target.classList).filter(c => !c.startsWith('__htmlrunner'))[0];
+        if (cls) desc += '.' + cls;
+      }
+      tooltipEl.textContent = desc;
+      const rect = target.getBoundingClientRect();
+      let top = rect.top - 24;
+      if (top < 2) top = rect.bottom + 4;
+      tooltipEl.style.top = Math.max(2, top) + 'px';
+      tooltipEl.style.left = Math.max(2, rect.left) + 'px';
+      tooltipEl.style.display = 'block';
+    }
+  };
+
+  boundIframeOut = function (e) {
+    const target = e.target;
+    if (target && target.classList) {
+      target.classList.remove('__htmlrunner-hovered');
+    }
+    if (tooltipEl) tooltipEl.style.display = 'none';
+  };
+
+  boundIframeClick = function (e) {
+    if (!visualEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const target = e.target;
+    if (!isEditablePreviewElement(target)) return;
+
+    if (tooltipEl) tooltipEl.style.display = 'none';
+    selectPreviewElement(target);
+  };
+
+  doc.addEventListener('mouseover', boundIframeOver, true);
+  doc.addEventListener('mouseout', boundIframeOut, true);
+  doc.addEventListener('click', boundIframeClick, true);
+}
+
+function selectPreviewElement(el) {
+  if (selectedPreviewElement && selectedPreviewElement.classList) {
+    selectedPreviewElement.classList.remove('__htmlrunner-selected');
+  }
+
+  selectedPreviewElement = el;
+  selectedPreviewElement.classList.remove('__htmlrunner-hovered');
+  selectedPreviewElement.classList.add('__htmlrunner-selected');
+
+  openVisualEditPanel(el);
+}
+
+function clearVisualSelection(restorePreview = false) {
+  if (restorePreview && selectedPreviewElement) {
+    restorePreviewElementState();
+  }
+  if (selectedPreviewElement && selectedPreviewElement.classList) {
+    selectedPreviewElement.classList.remove('__htmlrunner-selected');
+    selectedPreviewElement.classList.remove('__htmlrunner-hovered');
+  }
+  selectedPreviewElement = null;
+  document.getElementById('visual-edit-panel').classList.remove('show');
+}
+
+// Color conversion helpers
+function rgbToHex(rgbStr) {
+  if (!rgbStr || rgbStr === 'transparent' || rgbStr === 'inherit' || rgbStr === 'initial') return '';
+  const match = rgbStr.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/i);
+  if (!match) return rgbStr;
+  if (match[4] && parseFloat(match[4]) === 0) return '';
+  const r = parseInt(match[1], 10).toString(16).padStart(2, '0');
+  const g = parseInt(match[2], 10).toString(16).padStart(2, '0');
+  const b = parseInt(match[3], 10).toString(16).padStart(2, '0');
+  return `#${r}${g}${b}`;
+}
+
+function isValidHexColor(hex) {
+  return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex.trim());
+}
+
+function normalizeHexColor(hex) {
+  let h = hex.trim();
+  if (!h.startsWith('#')) h = '#' + h;
+  if (h.length === 4) {
+    h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  }
+  return h;
+}
+
+function openVisualEditPanel(el) {
+  const panel = document.getElementById('visual-edit-panel');
+  const tagEl = document.getElementById('ve-tag-name');
+  const pathEl = document.getElementById('ve-path-text');
+  const textInput = document.getElementById('ve-text-input');
+  const colorPicker = document.getElementById('ve-color-picker');
+  const colorHex = document.getElementById('ve-color-hex');
+  const bgPicker = document.getElementById('ve-bg-picker');
+  const bgHex = document.getElementById('ve-bg-hex');
+  const textGroup = document.getElementById('ve-text-group');
+
+  const tagName = el.tagName.toLowerCase();
+  const path = getElementPath(el);
+
+  let desc = tagName;
+  if (el.id) desc += '#' + el.id;
+  if (el.className && typeof el.className === 'string') {
+    const cleanClasses = el.className.split(' ').filter(c => !c.startsWith('__htmlrunner')).join('.');
+    if (cleanClasses) desc += '.' + cleanClasses;
+  }
+  tagEl.textContent = desc;
+  pathEl.textContent = path;
+
+  // Determine element text/value mode
+  const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+  originalPreviewState.isInput = isInput;
+
+  let initialText = '';
+  if (isInput) {
+    initialText = el.value || '';
+    textGroup.style.display = 'flex';
+    isDirectTextElement = true;
+  } else {
+    // Check if element has child elements
+    const hasElementChildren = el.children.length > 0;
+    if (hasElementChildren) {
+      // Element with nested tags: check direct text nodes
+      let directText = '';
+      for (const node of el.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim().length > 0) {
+          directText += node.nodeValue;
+        }
+      }
+      if (directText.trim().length > 0) {
+        initialText = directText.trim();
+        textGroup.style.display = 'flex';
+        isDirectTextElement = false;
+      } else {
+        textGroup.style.display = 'none';
+        initialText = '';
+        isDirectTextElement = false;
+      }
+    } else {
+      initialText = el.textContent || '';
+      textGroup.style.display = 'flex';
+      isDirectTextElement = true;
+    }
+  }
+
+  textInput.value = initialText;
+  originalPreviewState.text = initialText;
+
+  // Computed styles for initial display
+  const win = el.ownerDocument.defaultView || window;
+  const computed = win.getComputedStyle(el);
+
+  const hexColor = rgbToHex(computed.color) || '#000000';
+  const hexBg = rgbToHex(computed.backgroundColor) || '';
+
+  colorHex.value = hexColor;
+  colorPicker.value = isValidHexColor(hexColor) ? normalizeHexColor(hexColor) : '#000000';
+
+  bgHex.value = hexBg;
+  bgPicker.value = isValidHexColor(hexBg) ? normalizeHexColor(hexBg) : '#ffffff';
+
+  originalPreviewState.color = el.style.color || '';
+  originalPreviewState.backgroundColor = el.style.backgroundColor || '';
+
+  panel.classList.add('show');
+}
+
+function restorePreviewElementState() {
+  if (!selectedPreviewElement) return;
+  if (originalPreviewState.isInput) {
+    selectedPreviewElement.value = originalPreviewState.text;
+  } else if (isDirectTextElement) {
+    selectedPreviewElement.textContent = originalPreviewState.text;
+  }
+  selectedPreviewElement.style.color = originalPreviewState.color;
+  selectedPreviewElement.style.backgroundColor = originalPreviewState.backgroundColor;
+}
+
+// Live feedback listeners
+document.getElementById('ve-text-input').addEventListener('input', function () {
+  if (!selectedPreviewElement) return;
+  const val = this.value;
+  if (originalPreviewState.isInput) {
+    selectedPreviewElement.value = val;
+  } else if (isDirectTextElement) {
+    selectedPreviewElement.textContent = val;
+  }
+});
+
+document.getElementById('ve-color-picker').addEventListener('input', function () {
+  if (!selectedPreviewElement) return;
+  const val = this.value;
+  document.getElementById('ve-color-hex').value = val;
+  selectedPreviewElement.style.color = val;
+});
+
+document.getElementById('ve-color-hex').addEventListener('input', function () {
+  if (!selectedPreviewElement) return;
+  const val = this.value.trim();
+  if (isValidHexColor(val)) {
+    const norm = normalizeHexColor(val);
+    document.getElementById('ve-color-picker').value = norm;
+    selectedPreviewElement.style.color = norm;
+  }
+});
+
+document.getElementById('ve-bg-picker').addEventListener('input', function () {
+  if (!selectedPreviewElement) return;
+  const val = this.value;
+  document.getElementById('ve-bg-hex').value = val;
+  selectedPreviewElement.style.backgroundColor = val;
+});
+
+document.getElementById('ve-bg-hex').addEventListener('input', function () {
+  if (!selectedPreviewElement) return;
+  const val = this.value.trim();
+  if (isValidHexColor(val)) {
+    const norm = normalizeHexColor(val);
+    document.getElementById('ve-bg-picker').value = norm;
+    selectedPreviewElement.style.backgroundColor = norm;
+  }
+});
+
+document.getElementById('ve-color-reset').addEventListener('click', function () {
+  document.getElementById('ve-color-hex').value = '';
+  if (selectedPreviewElement) {
+    selectedPreviewElement.style.color = '';
+  }
+});
+
+document.getElementById('ve-bg-reset').addEventListener('click', function () {
+  document.getElementById('ve-bg-hex').value = '';
+  if (selectedPreviewElement) {
+    selectedPreviewElement.style.backgroundColor = '';
+  }
+});
+
+document.getElementById('ve-close').addEventListener('click', () => clearVisualSelection(true));
+document.getElementById('ve-cancel-btn').addEventListener('click', () => clearVisualSelection(true));
+
+// ===== COMMIT CHANGES TO MONACO =====
+document.getElementById('ve-apply-btn').addEventListener('click', applyVisualChanges);
+
+function applyVisualChanges() {
+  if (!selectedPreviewElement || !monacoEditor) {
+    clearVisualSelection(false);
+    return;
+  }
+
+  const path = getElementPath(selectedPreviewElement);
+  const currentCode = monacoEditor.getValue();
+  const parser = new DOMParser();
+  const sourceDoc = parser.parseFromString(currentCode, 'text/html');
+
+  const targetSourceEl = findElementByPath(sourceDoc, path);
+  if (!targetSourceEl) {
+    showToast('Could not safely map this element to source code. (Dynamic DOM?)', 'warning', '⚠');
+    clearVisualSelection(true);
+    return;
+  }
+
+  const tagName = selectedPreviewElement.tagName.toLowerCase();
+  const newText = document.getElementById('ve-text-input').value;
+  const colorVal = document.getElementById('ve-color-hex').value.trim();
+  const bgVal = document.getElementById('ve-bg-hex').value.trim();
+
+  // Validate colors if non-empty
+  if (colorVal && !isValidHexColor(colorVal)) {
+    showToast('Invalid Text Color Hex format (#fff or #ffffff)', 'error', '⚠');
+    return;
+  }
+  if (bgVal && !isValidHexColor(bgVal)) {
+    showToast('Invalid Background Color Hex format', 'error', '⚠');
+    return;
+  }
+
+  // Apply to parsed DOM element: Text / Value
+  const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+  if (isInput) {
+    targetSourceEl.setAttribute('value', newText);
+    if (tagName === 'textarea') {
+      targetSourceEl.textContent = newText;
+    }
+  } else if (isDirectTextElement) {
+    targetSourceEl.textContent = newText;
+  } else if (document.getElementById('ve-text-group').style.display !== 'none') {
+    // Replace the first direct text node safely without erasing child elements
+    let replaced = false;
+    for (const node of targetSourceEl.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim().length > 0) {
+        node.nodeValue = newText;
+        replaced = true;
+        break;
+      }
+    }
+    if (!replaced) {
+      targetSourceEl.insertBefore(sourceDoc.createTextNode(newText), targetSourceEl.firstChild);
+    }
+  }
+
+  // Update inline style declarations safely
+  updateInlineStyle(targetSourceEl, 'color', colorVal ? normalizeHexColor(colorVal) : null);
+  updateInlineStyle(targetSourceEl, 'background-color', bgVal ? normalizeHexColor(bgVal) : null);
+
+  // Serialize updated HTML
+  let updatedHtml = '';
+  if (sourceDoc.doctype) {
+    updatedHtml += new XMLSerializer().serializeToString(sourceDoc.doctype) + '\n';
+  }
+  updatedHtml += sourceDoc.documentElement.outerHTML;
+
+  // Monaco Edit with undo/redo
+  const model = monacoEditor.getModel();
+  const fullRange = model.getFullModelRange();
+
+  monacoEditor.pushUndoStop();
+  monacoEditor.executeEdits('visual-editor', [
+    {
+      range: fullRange,
+      text: updatedHtml,
+      forceMoveMarkers: true,
+    }
+  ]);
+  monacoEditor.pushUndoStop();
+
+  showToast('Element updated in source code', 'success', '✏️');
+  clearVisualSelection(false);
+  runPreview();
+}
+
+function updateInlineStyle(el, propName, propValue) {
+  const currentStyle = el.getAttribute('style') || '';
+  const declarations = currentStyle.split(';')
+    .map(d => d.trim())
+    .filter(d => d.length > 0);
+
+  const styleMap = new Map();
+  for (const dec of declarations) {
+    const colonIdx = dec.indexOf(':');
+    if (colonIdx > 0) {
+      const key = dec.substring(0, colonIdx).trim().toLowerCase();
+      const val = dec.substring(colonIdx + 1).trim();
+      styleMap.set(key, val);
+    }
+  }
+
+  if (propValue) {
+    styleMap.set(propName, propValue);
+  } else {
+    styleMap.delete(propName);
+  }
+
+  if (styleMap.size > 0) {
+    const newStyle = Array.from(styleMap.entries())
+      .map(([k, v]) => `${k}: ${v}`)
+      .join('; ') + ';';
+    el.setAttribute('style', newStyle);
+  } else {
+    el.removeAttribute('style');
+  }
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', function (e) {
+  const ctrl = e.ctrlKey || e.metaKey;
+
+  if (e.key === '?' && !ctrl && !e.shiftKey && !isInputFocused()) {
+    e.preventDefault();
+    openShortcuts();
+    return;
+  }
+  if (e.key === 'Escape') {
+    closeFullscreen();
+    closeSettings();
+    closeShortcuts();
+    clearVisualSelection(true);
+    return;
+  }
+  if (!ctrl) return;
+
+  switch (e.key) {
+    case 'Enter':
+      e.preventDefault();
+      runPreview();
+      break;
+    case 's':
+      e.preventDefault();
+      downloadCode();
+      break;
+    case 'o':
+      e.preventDefault();
+      triggerUpload();
+      break;
+    case 'r':
+      if (!e.shiftKey) { e.preventDefault(); refreshPreview(); }
+      break;
+    case 'C':
+    case 'c':
+      if (e.shiftKey) { e.preventDefault(); copyCode(); }
+      break;
+    case 'F':
+    case 'f':
+      if (e.shiftKey) { e.preventDefault(); openFullscreen(); }
+      break;
+    case 'T':
+    case 't':
+      if (e.shiftKey) { e.preventDefault(); toggleTheme(); }
+      break;
+    case 'E':
+    case 'e':
+      if (e.shiftKey) { e.preventDefault(); toggleVisualEditMode(); }
+      break;
+  }
+});
+
+function isInputFocused() {
+  const el = document.activeElement;
+  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
+}
+
+// ===== BUTTON EVENTS =====
+document.getElementById('btn-upload').addEventListener('click', triggerUpload);
+document.getElementById('btn-download').addEventListener('click', downloadCode);
+document.getElementById('btn-copy').addEventListener('click', copyCode);
+document.getElementById('btn-run').addEventListener('click', runPreview);
+document.getElementById('btn-refresh').addEventListener('click', refreshPreview);
+document.getElementById('btn-visual-edit').addEventListener('click', toggleVisualEditMode);
+document.getElementById('btn-settings').addEventListener('click', openSettings);
+document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+document.getElementById('btn-shortcuts').addEventListener('click', openShortcuts);
+document.getElementById('btn-fullscreen').addEventListener('click', openFullscreen);
+document.getElementById('btn-newtab').addEventListener('click', openInNewTab);
+document.getElementById('fs-close').addEventListener('click', closeFullscreen);
+document.getElementById('fs-newtab').addEventListener('click', openInNewTab);
+document.getElementById('settings-close').addEventListener('click', closeSettings);
+
+// Console toggle
+const consolePanel = document.getElementById('error-console');
+document.getElementById('btn-console').addEventListener('click', () => {
+  consolePanel.classList.toggle('open');
+});
+document.getElementById('console-toggle-btn').addEventListener('click', () => {
+  consolePanel.classList.toggle('open');
+});
+
+// Zoom controls
+document.getElementById('zoom-in').addEventListener('click', () => setPreviewZoom(previewZoom + 10));
+document.getElementById('zoom-out').addEventListener('click', () => setPreviewZoom(previewZoom - 10));
+document.getElementById('zoom-reset').addEventListener('click', () => setPreviewZoom(100));
+
+// Modal backdrop close
+document.getElementById('settings-modal').addEventListener('click', function (e) {
+  if (e.target === this) closeSettings();
+});
+document.getElementById('shortcuts-modal').addEventListener('click', function (e) {
+  if (e.target === this) closeShortcuts();
+});
+document.getElementById('fullscreen-modal').addEventListener('click', function (e) {
+  if (e.target === this) closeFullscreen();
+});
+
+// ===== WELCOME MESSAGE =====
+window.addEventListener('load', function () {
+  setTimeout(() => {
+    showToast('🚀 HTML Runner ready! Press ▶ Run or ✏️ Edit to begin.', 'success', '🚀');
+  }, 800);
+});
+</script>
+</body>
+</html>
