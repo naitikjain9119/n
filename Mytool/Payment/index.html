@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UPI Payment QR Generator — Single QR & Smart Under-₹2,000 Split</title>
+  <meta name="description" content="Generate individual or smart split UPI payment QR codes under ₹1,999 with automatic math validation, zero server reliance, and instant export." />
+
+  <!-- Preconnect and Load Inter Font & QR Library -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       CSS VARIABLES & RESET
+       ========================================================================== */
+    :root {
+      --primary: #1e3a8a;          /* Deep Indigo/Blue */
+      --primary-hover: #172554;
+      --primary-light: #eff6ff;
+      --accent-green: #059669;      /* Success Green */
+      --accent-green-bg: #ecfdf5;
+      --accent-amber: #d97706;      /* Warning Amber */
+      --accent-amber-bg: #fffbeb;
+      --danger: #dc2626;            /* Error Red */
+      --danger-bg: #fef2f2;
+      --surface: #ffffff;
+      --bg: #f8fafc;
+      --border: #e2e8f0;
+      --border-focus: #3b82f6;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-sub: #475569;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 14px;
+      --radius-sm: 8px;
+      --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Accessibility focus ring */
+    :focus-visible {
+      outline: 2px solid var(--border-focus);
+      outline-offset: 2px;
+    }
+
+    /* ==========================================================================
+       CONTAINER & HEADER
+       ========================================================================== */
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+      flex: 1;
+    }
+
+    .app-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      border: 1px solid #bfdbfe;
+    }
+
+    .header-badge svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .app-header h1 {
+      font-size: 2.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+    }
+
+    .app-header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================================================
+       TAB SELECTOR (MODE SELECTION)
+       ========================================================================== */
+    .mode-selector-wrapper {
+      margin-bottom: 1.75rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .mode-selector {
+      background: #e2e8f0;
+      padding: 0.35rem;
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem;
+      width: 100%;
+      max-width: 580px;
+    }
+
+    .mode-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.85rem 1rem;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      cursor: pointer;
+      color: var(--text-sub);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-tab .tab-subtitle {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .mode-tab.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .mode-tab.active .tab-subtitle {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       FORM CARD & INPUTS
+       ========================================================================== */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--primary);
+      stroke-width: 2;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 768px) {
+      .form-grid.two-col {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-label .badge-req {
+      font-size: 0.75rem;
+      color: var(--danger);
+      font-weight: 500;
+    }
+
+    .form-label .badge-opt {
+      font-size: 0.725rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper .input-prefix {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.975rem;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      background-color: #ffffff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-with-prefix {
+      padding-left: 2.25rem;
+    }
+
+    .form-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      outline: none;
+    }
+
+    .form-input.is-invalid {
+      border-color: var(--danger);
+      background-color: #fffaf0;
+    }
+
+    .field-hint {
+      font-size: 0.775rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .field-error {
+      font-size: 0.775rem;
+      color: var(--danger);
+      margin-top: 0.2rem;
+      display: none;
+      font-weight: 500;
+    }
+
+    .field-error.visible {
+      display: block;
+    }
+
+    /* Advanced Settings Collapse */
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 0.75rem 0;
+      color: var(--text-sub);
+      font-size: 0.875rem;
+      font-weight: 600;
+      user-select: none;
+      border-top: 1px dashed var(--border);
+      margin-top: 0.5rem;
+    }
+
+    .collapsible-header:hover {
+      color: var(--primary);
+    }
+
+    .collapsible-content {
+      display: none;
+      padding: 0.75rem 0 0.25rem;
+    }
+
+    .collapsible-content.expanded {
+      display: block;
+    }
+
+    /* Action Buttons Area */
+    .form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+      flex: 1 1 200px;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border-color: var(--border);
+      color: var(--text-sub);
+    }
+
+    .btn-outline:hover {
+      background-color: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .btn-sm {
+      padding: 0.45rem 0.85rem;
+      font-size: 0.825rem;
+      border-radius: 6px;
+    }
+
+    /* ==========================================================================
+       RESULTS SECTION & CARDS
+       ========================================================================== */
+    .results-section {
+      display: none;
+      margin-bottom: 2.5rem;
+    }
+
+    .results-section.active {
+      display: block;
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      color: #ffffff;
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.75rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .summary-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .summary-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .metric-item {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: #bfdbfe;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: var(--font-mono);
+    }
+
+    .summary-alert {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.825rem;
+      color: #dbeafe;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.6rem 0.85rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .summary-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    /* QR Code Grid */
+    .qr-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .qr-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      }
+    }
+
+    /* Single QR Card Design */
+    .qr-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .qr-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .qr-card-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .qr-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+    }
+
+    .qr-compliance {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent-green);
+      background: var(--accent-green-bg);
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .qr-amount-display {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      margin: 0.25rem 0 0.5rem;
+    }
+
+    .qr-recipient-display {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      word-break: break-all;
+      margin-bottom: 1.25rem;
+      line-height: 1.3;
+    }
+
+    .qr-recipient-name {
+      font-weight: 600;
+      color: var(--text-main);
+      display: block;
+    }
+
+    .qr-canvas-wrapper {
+      background: #ffffff;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.03);
+    }
+
+    .qr-canvas-wrapper img,
+    .qr-canvas-wrapper canvas {
+      display: block;
+      width: 200px !important;
+      height: 200px !important;
+    }
+
+    .qr-meta-box {
+      width: 100%;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.75rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.775rem;
+      text-align: left;
+    }
+
+    .qr-meta-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+    }
+
+    .qr-meta-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .qr-meta-label {
+      color: var(--text-muted);
+    }
+
+    .qr-meta-val {
+      font-weight: 600;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    .qr-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    .qr-card-actions .btn {
+      padding: 0.55rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    /* ==========================================================================
+       EMPTY & ALERT STATES
+       ========================================================================== */
+    .empty-state {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 3.5rem 1.5rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1rem;
+      color: #94a3b8;
+    }
+
+    .empty-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
+    }
+
+    .empty-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .disclaimer-banner {
+      background: var(--accent-amber-bg);
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.825rem;
+      color: #92400e;
+      line-height: 1.45;
+    }
+
+    .disclaimer-banner svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Breakdown Table Modal or Preview */
+    .breakdown-table-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .breakdown-table-box.active {
+      display: block;
+    }
+
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    .breakdown-table th, 
+    .breakdown-table td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .breakdown-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .breakdown-table tr:last-child td {
+      border-bottom: none;
+      font-weight: 700;
+      background: #f1f5f9;
+    }
+
+    /* ==========================================================================
+       HOW IT WORKS & ACCORDION
+       ========================================================================== */
+    .accordion-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .accordion-trigger {
+      width: 100%;
+      padding: 1.15rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: left;
+    }
+
+    .accordion-trigger svg {
+      transition: transform 0.2s ease;
+      stroke: var(--text-sub);
+    }
+
+    .accordion-trigger.expanded svg {
+      transform: rotate(180deg);
+    }
+
+    .accordion-panel {
+      padding: 0 1.5rem 1.5rem;
+      display: none;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      color: var(--text-sub);
+    }
+
+    .accordion-panel.expanded {
+      display: block;
+      padding-top: 1.25rem;
+    }
+
+    .step-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      counter-reset: steps;
+      list-style: none;
+    }
+
+    .step-item {
+      position: relative;
+      padding-left: 2.25rem;
+      counter-increment: steps;
+      line-height: 1.45;
+    }
+
+    .step-item::before {
+      content: counter(steps);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* ==========================================================================
+       TOAST NOTIFICATIONS
+       ========================================================================== */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      max-width: 380px;
+    }
+
+    .toast.toast-error {
+      background: #991b1b;
+    }
+
+    .toast.toast-success {
+      background: #065f46;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(8px) scale(0.96); }
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    .app-footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+
+    .creator-credit {
+      font-weight: 600;
+      color: var(--text-main);
+      display: inline-block;
+      margin-top: 0.25rem;
+    }
+
+    /* ==========================================================================
+       PRINT STYLES
+       ========================================================================== */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+
+      .app-header,
+      .mode-selector-wrapper,
+      .card:not(.print-target),
+      .summary-toolbar,
+      .qr-card-actions,
+      .accordion-card,
+      .disclaimer-banner,
+      .empty-state,
+      .toast-container,
+      .collapsible-header,
+      .collapsible-content,
+      .form-actions {
+        display: none !important;
+      }
+
+      .results-section {
+        display: block !important;
+      }
+
+      .qr-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1.5rem !important;
+      }
+
+      .qr-card {
+        border: 2px solid #000000 !important;
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+
+      .qr-canvas-wrapper {
+        border: 1px solid #000000 !important;
+        box-shadow: none !important;
+      }
+
+      .summary-card {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #000000 !important;
+        page-break-inside: avoid;
+      }
+
+      .metric-item {
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+
+      .metric-label {
+        color: #475569 !important;
+      }
+
+      .metric-value {
+        color: #000000 !important;
+      }
+
+      .app-footer {
+        border-top: 1px solid #000000;
+        margin-top: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+        Instant UPI QR Generator
+      </div>
+      <h1>UPI QR Generator</h1>
+      <p>Create single payment QR codes or split large amounts into multiple QR codes under ₹2,000.</p>
+    </header>
+
+    <!-- Payment Mode Selector -->
+    <div class="mode-selector-wrapper">
+      <div class="mode-selector" role="tablist" aria-label="Payment QR Mode">
+        <button type="button" class="mode-tab active" id="tabModeSingle" role="tab" aria-selected="true" aria-controls="modeDescSingle">
+          Single QR
+          <span class="tab-subtitle">Exact Amount in One QR</span>
+        </button>
+        <button type="button" class="mode-tab" id="tabModeSplit" role="tab" aria-selected="false" aria-controls="modeDescSplit">
+          Split Under ₹2,000
+          <span class="tab-subtitle">Smart split ≤ ₹1,999</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Input Form Card -->
+    <section class="card" aria-labelledby="formTitle">
+      <h2 id="formTitle" class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        Payment Details
+      </h2>
+
+      <form id="upiForm" novalidate>
+        <div class="form-grid two-col">
+          <!-- UPI ID / VPA -->
+          <div class="form-group">
+            <label for="upiId" class="form-label">
+              UPI ID / VPA
+              <span class="badge-req">Required</span>
+            </label>
+            <input 
+              type="text" 
+              id="upiId" 
+              class="form-input" 
+              placeholder="e.g. name@okhdfcbank or merchant@upi" 
+              autocomplete="off"
+              spellcheck="false"
+              required 
+            />
+            <span class="field-hint">Standard Virtual Payment Address (e.g., example@upi)</span>
+            <span class="field-error" id="upiIdError"></span>
+          </div>
+
+          <!-- Recipient Name -->
+          <div class="form-group">
+            <label for="payeeName" class="form-label">
+              Payee / Merchant Name
+              <span class="badge-opt">Optional</span>
+            </label>
+            <input 
+              type="text" 
+              id="payeeName" 
+              class="form-input" 
+              placeholder="e.g. name
+              " 
+              maxlength="70"
+            />
+            <span class="field-hint">Encoded into the UPI URI for recipient clarity</span>
+            <span class="field-error" id="payeeNameError"></span>
+          </div>
+
+          <!-- Mobile Reference -->
+          <div class="form-group">
+            <label for="mobileNumber" class="form-label">
+              Mobile Number (Reference)
+              <span class="badge-opt">Optional</span>
+            </label>
+            <input 
+              type="tel" 
+              id="mobileNumber" 
+              class="form-input" 
+              placeholder="e.g. +91 98765 43210" 
+              maxlength="16"
+            />
+            <span class="field-hint">Indian 10-digit number. Used as reference note; cannot replace a UPI ID.</span>
+            <span class="field-error" id="mobileNumberError"></span>
+          </div>
+
+          <!-- Payment Amount -->
+          <div class="form-group">
+            <label for="amount" class="form-label">
+              Payment Amount
+              <span class="badge-req">Required</span>
+            </label>
+            <div class="input-wrapper">
+              <span class="input-prefix">₹</span>
+              <input 
+                type="number" 
+                id="amount" 
+                class="form-input input-with-prefix" 
+                placeholder="amount" 
+                step="any"
+                min="1"
+                required 
+              />
+            </div>
+            <span class="field-hint" id="amountHint">Enter the exact amount in Indian Rupees (₹).</span>
+            <span class="field-error" id="amountError"></span>
+          </div>
+        </div>
+
+        <!-- Advanced Options Toggle for Split Mode -->
+        <div id="advancedSplitOptions" style="display: none; margin-top: 1rem;">
+          <div class="collapsible-header" id="advOptionsTrigger">
+            <span>⚙️ Advanced: Maximum Amount Per QR (Enforced ≤ ₹1,999)</span>
+            <span id="advOptionsIcon">▼</span>
+          </div>
+          <div class="collapsible-content" id="advOptionsContent">
+            <div class="form-group" style="max-width: 320px;">
+              <label for="maxQrAmount" class="form-label">
+                Custom Max Limit Per QR (₹)
+                <span class="badge-opt">Hard ceiling ₹1,999</span>
+              </label>
+              <div class="input-wrapper">
+                <span class="input-prefix">₹</span>
+                <input 
+                  type="number" 
+                  id="maxQrAmount" 
+                  class="form-input input-with-prefix" 
+                  value="1999" 
+                  min="1" 
+                  max="1999"
+                  step="1"
+                />
+              </div>
+              <span class="field-hint">Default is ₹1,999. You can set a lower ceiling (e.g., ₹500). Values ≥ ₹2,000 are blocked.</span>
+              <span class="field-error" id="maxQrAmountError"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Buttons -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="btnGenerate">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 3h6m-3-3v6"/></svg>
+            Generate QR
+          </button>
+          <button type="button" class="btn btn-outline" id="btnClear">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            Clear
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Empty State (Before Generation) -->
+    <div class="empty-state" id="emptyState">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      <h3 class="empty-title">Your QR code will appear here</h3>
+      <p class="empty-desc">Fill in the recipient UPI ID and amount above, then click <strong>Generate QR</strong> to create scannable payment codes.</p>
+    </div>
+
+    <!-- Payment Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <div>
+        <strong>Payment Request Notice:</strong> This QR generator locally builds standard UPI payment URIs. It does not process, verify, or hold funds. All transactions must be completed and authenticated inside your authorized UPI banking application (e.g., BHIM, Google Pay, PhonePe, Paytm).
+      </div>
+    </div>
+
+    <!-- Results Section (Visible after generation) -->
+    <section class="results-section" id="resultsSection" aria-live="polite">
+      <!-- Summary Card -->
+      <div class="summary-card" id="summaryCard">
+        <div class="summary-title">
+          <span>Payment QR Overview</span>
+          <span id="summaryModeBadge" class="qr-compliance" style="background: rgba(255,255,255,0.25); color: #fff;">Mode</span>
+        </div>
+        <div class="summary-metrics">
+          <div class="metric-item">
+            <div class="metric-label">Total Payment</div>
+            <div class="metric-value" id="summaryTotalAmount">₹0.00</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">QR Codes</div>
+            <div class="metric-value" id="summaryQrCount">0</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Max Per QR</div>
+            <div class="metric-value" id="summaryMaxPerQr">₹1,999</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Sum of Split QRs</div>
+            <div class="metric-value" id="summaryCheckSum">₹0.00</div>
+          </div>
+        </div>
+
+        <div class="summary-alert" id="splitComplianceNotice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span id="complianceText">All generated QR amounts strictly remain below ₹2,000.</span>
+        </div>
+
+        <div class="summary-toolbar">
+          <button type="button" class="btn btn-sm btn-glass" id="btnDownloadAll">
+            📥 Download All QR Codes
+          </button>
+          <button type="button" class="btn btn-sm btn-glass" id="btnCopyBreakdown">
+            📋 Copy Breakdown
+          </button>
+          <button type="button" class="btn btn-sm btn-glass" id="btnToggleBreakdownTable">
+            📊 View Table Breakdown
+          </button>
+          <button type="button" class="btn btn-sm btn-glass" id="btnPrintPage">
+            🖨️ Print QRs
+          </button>
+        </div>
+
+        <!-- Breakdown Table Collapsible -->
+        <div class="breakdown-table-box" id="breakdownTableBox">
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th>QR Code</th>
+                <th>Amount (₹)</th>
+                <th>Reference ID</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="breakdownTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Grid of Generated QR Cards -->
+      <div class="qr-grid" id="qrCardsGrid"></div>
+    </section>
+
+    <!-- Information Section: How it Works -->
+    <section class="accordion-card">
+      <button type="button" class="accordion-trigger" id="btnHowItWorks" aria-expanded="false">
+        <span>📘 How UPI QR Generation Works & Safety Guidelines</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div class="accordion-panel" id="howItWorksPanel">
+        <ol class="step-list">
+          <li class="step-item">
+            <strong>Enter Payee UPI ID (VPA):</strong> Specify the recipient's registered UPI ID (e.g. <code>username@bank</code>). Phone numbers cannot be arbitrarily converted to UPI addresses without knowing the exact bank handle.
+          </li>
+          <li class="step-item">
+            <strong>Specify Payment Amount:</strong> Choose <em>Single QR</em> for a 1:1 payment code or <em>Split Under ₹2,000</em> for transactions split so each QR code never exceeds ₹1,999.
+          </li>
+          <li class="step-item">
+            <strong>Mathematical Split Precision:</strong> In Split mode, the system executes pure integer arithmetic in paise, guaranteeing that the split sum matches the exact requested total down to the paisa.
+          </li>
+          <li class="step-item">
+            <strong>Scan & Verify in UPI App:</strong> Open any authorized UPI app (Google Pay, PhonePe, Paytm, BHIM, etc.), scan the QR, verify the payee's name and amount on your phone screen, and authorize using your secure UPI PIN.
+          </li>
+          <li class="step-item">
+            <strong>Client-Side Privacy:</strong> All QR encoding and mathematical validation happen 100% inside your web browser. No payment information or financial credentials are ever transmitted to an external server.
+          </li>
+        </ol>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="assertive"></div>
+
+  <!-- Footer with Mandatory Creator Credit -->
+  <footer class="app-footer">
+    <p>Client-side UPI URI standard compliant (NPCI spec). No external payment data processing.</p>
+    <p class="creator-credit">This website is made by Naitik Rakish Kumar Jain.</p>
+  </footer>
+
+  <!-- ==========================================================================
+       APPLICATION LOGIC (JAVASCRIPT)
+       ========================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ------------------------------------------------------------------------
+         1. CONSTANTS & CONFIGURATION
+         ------------------------------------------------------------------------ */
+      const CONFIG = {
+        MAX_SAFE_TOTAL_INR: 10000000,   // ₹1,00,00,000 Max total input
+        MAX_CARD_RENDER_LIMIT: 100,     // Max cards rendered in DOM to avoid browser lag
+        HARD_MAX_QR_AMOUNT_INR: 1999,   // Max per QR in split mode
+        DEFAULT_CURRENCY: 'INR'
+      };
+
+      /* ------------------------------------------------------------------------
+         2. STATE MANAGEMENT
+         ------------------------------------------------------------------------ */
+      const state = {
+        mode: 'single', // 'single' | 'split'
+        generatedQrs: [], // array of { qrNumber, amountINR, paise, uri, tr }
+        totalPaise: 0,
+        payeeVpa: '',
+        payeeName: '',
+        mobileRef: '',
+        maxQrAmountINR: CONFIG.HARD_MAX_QR_AMOUNT_INR
+      };
+
+      /* ------------------------------------------------------------------------
+         3. DOM REFERENCES
+         ------------------------------------------------------------------------ */
+      const dom = {
+        tabModeSingle: document.getElementById('tabModeSingle'),
+        tabModeSplit: document.getElementById('tabModeSplit'),
+        upiForm: document.getElementById('upiForm'),
+        upiId: document.getElementById('upiId'),
+        payeeName: document.getElementById('payeeName'),
+        mobileNumber: document.getElementById('mobileNumber'),
+        amount: document.getElementById('amount'),
+        amountHint: document.getElementById('amountHint'),
+        maxQrAmount: document.getElementById('maxQrAmount'),
+        advancedSplitOptions: document.getElementById('advancedSplitOptions'),
+        advOptionsTrigger: document.getElementById('advOptionsTrigger'),
+        advOptionsContent: document.getElementById('advOptionsContent'),
+        advOptionsIcon: document.getElementById('advOptionsIcon'),
+        btnGenerate: document.getElementById('btnGenerate'),
+        btnClear: document.getElementById('btnClear'),
+        emptyState: document.getElementById('emptyState'),
+        resultsSection: document.getElementById('resultsSection'),
+        summaryTotalAmount: document.getElementById('summaryTotalAmount'),
+        summaryQrCount: document.getElementById('summaryQrCount'),
+        summaryMaxPerQr: document.getElementById('summaryMaxPerQr'),
+        summaryCheckSum: document.getElementById('summaryCheckSum'),
+        summaryModeBadge: document.getElementById('summaryModeBadge'),
+        complianceText: document.getElementById('complianceText'),
+        splitComplianceNotice: document.getElementById('splitComplianceNotice'),
+        qrCardsGrid: document.getElementById('qrCardsGrid'),
+        btnDownloadAll: document.getElementById('btnDownloadAll'),
+        btnCopyBreakdown: document.getElementById('btnCopyBreakdown'),
+        btnToggleBreakdownTable: document.getElementById('btnToggleBreakdownTable'),
+        btnPrintPage: document.getElementById('btnPrintPage'),
+        breakdownTableBox: document.getElementById('breakdownTableBox'),
+        breakdownTableBody: document.getElementById('breakdownTableBody'),
+        btnHowItWorks: document.getElementById('btnHowItWorks'),
+        howItWorksPanel: document.getElementById('howItWorksPanel'),
+        toastContainer: document.getElementById('toastContainer'),
+        errors: {
+          upiId: document.getElementById('upiIdError'),
+          payeeName: document.getElementById('payeeNameError'),
+          mobileNumber: document.getElementById('mobileNumberError'),
+          amount: document.getElementById('amountError'),
+          maxQrAmount: document.getElementById('maxQrAmountError')
+        }
+      };
+
+      /* ------------------------------------------------------------------------
+         4. UTILITY & TOAST SYSTEM
+         ------------------------------------------------------------------------ */
+      function showToast(message, type = 'info', duration = 3200) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type === 'error' ? 'toast-error' : type === 'success' ? 'toast-success' : ''}`;
+        
+        const icon = type === 'success' ? '✓ ' : type === 'error' ? '⚠ ' : 'ℹ ';
+        toast.textContent = icon + message;
+
+        dom.toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.animation = 'toastOut 0.25s forwards';
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.parentNode.removeChild(toast);
+            }
+          }, 250);
+        }, duration);
+      }
+
+      function formatINR(number) {
+        return new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(number);
+      }
+
+      function paiseToRupeesString(paise) {
+        return (paise / 100).toFixed(2);
+      }
+
+      /* ------------------------------------------------------------------------
+         5. VALIDATION LOGIC
+         ------------------------------------------------------------------------ */
+      function clearErrors() {
+        Object.keys(dom.errors).forEach(key => {
+          const el = dom.errors[key];
+          if (el) {
+            el.textContent = '';
+            el.classList.remove('visible');
+          }
+        });
+        document.querySelectorAll('.form-input').forEach(input => {
+          input.classList.remove('is-invalid');
+        });
+      }
+
+      function setError(fieldKey, message) {
+        const errEl = dom.errors[fieldKey];
+        const inputEl = dom[fieldKey];
+        if (errEl) {
+          errEl.textContent = message;
+          errEl.classList.add('visible');
+        }
+        if (inputEl) {
+          inputEl.classList.add('is-invalid');
+        }
+      }
+
+      function validateInputs() {
+        clearErrors();
+        let isValid = true;
+
+        // 1. UPI ID validation
+        const upiVal = dom.upiId.value.trim();
+        // Regex strictly matches user@bank identifier syntax
+        const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+        if (!upiVal) {
+          setError('upiId', 'UPI ID is required (e.g. name@upi).');
+          isValid = false;
+        } else if (!upiRegex.test(upiVal)) {
+          setError('upiId', 'Please enter a valid UPI ID syntax (e.g. merchant@icici or name@oksbi).');
+          isValid = false;
+        }
+
+        // 2. Payee Name (Optional, but if given, length & character check)
+        const nameVal = dom.payeeName.value.trim();
+        if (nameVal && nameVal.length > 70) {
+          setError('payeeName', 'Recipient name must not exceed 70 characters.');
+          isValid = false;
+        }
+
+        // 3. Mobile Number (Optional, strictly India 10-digit if provided)
+        const mobVal = dom.mobileNumber.value.trim();
+        if (mobVal) {
+          const cleanedMob = mobVal.replace(/[\s\-+]/g, '');
+          const isIndiaPhone = /^(?:91)?[6-9]\d{9}$/.test(cleanedMob);
+          if (!isIndiaPhone) {
+            setError('mobileNumber', 'Enter a valid 10-digit Indian mobile number (e.g. 9876543210).');
+            isValid = false;
+          }
+        }
+
+        // 4. Amount Validation
+        const amountValStr = dom.amount.value.trim();
+        const amountNum = parseFloat(amountValStr);
+
+        if (!amountValStr || isNaN(amountNum)) {
+          setError('amount', 'Please enter a valid numeric payment amount.');
+          isValid = false;
+        } else if (amountNum <= 0) {
+          setError('amount', 'Payment amount must be greater than ₹0.');
+          isValid = false;
+        } else if (amountNum > CONFIG.MAX_SAFE_TOTAL_INR) {
+          setError('amount', `Amount cannot exceed ${formatINR(CONFIG.MAX_SAFE_TOTAL_INR)}.`);
+          isValid = false;
+        }
+
+        // 5. Max QR Limit Validation in Split Mode
+        if (state.mode === 'split') {
+          const maxQrVal = parseFloat(dom.maxQrAmount.value);
+          if (isNaN(maxQrVal) || maxQrVal <= 0) {
+            setError('maxQrAmount', 'Please enter a positive limit amount.');
+            isValid = false;
+          } else if (maxQrVal > CONFIG.HARD_MAX_QR_AMOUNT_INR) {
+            setError('maxQrAmount', 'Split limit cannot exceed ₹1,999 under this mode.');
+            isValid = false;
+          }
+        }
+
+        return isValid;
+      }
+
+      /* ------------------------------------------------------------------------
+         6. MATHEMATICAL SPLIT ENGINE (PAISE INTEGER PRECISION)
+         ------------------------------------------------------------------------ */
+      function computeSplit(totalINR, maxPerQrINR) {
+        // Convert to integer Paise to prevent float precision drift
+        const totalPaise = Math.round(totalINR * 100);
+        const maxPerQrPaise = Math.round(maxPerQrINR * 100);
+
+        if (totalPaise <= 0 || maxPerQrPaise <= 0) {
+          return { success: false, error: 'Amounts must be strictly positive.' };
+        }
+
+        const splitResults = [];
+        let remainingPaise = totalPaise;
+
+        while (remainingPaise > 0) {
+          const chunkPaise = Math.min(remainingPaise, maxPerQrPaise);
+          splitResults.push(chunkPaise);
+          remainingPaise -= chunkPaise;
+        }
+
+        // Strict programmatic validation tests
+        const computedSum = splitResults.reduce((acc, curr) => acc + curr, 0);
+
+        if (computedSum !== totalPaise) {
+          return {
+            success: false,
+            error: `Math verification failed: Split sum (₹${(computedSum/100).toFixed(2)}) did not match original (₹${totalINR.toFixed(2)}).`
+          };
+        }
+
+        const hasInvalidPiece = splitResults.some(p => p <= 0 || p > maxPerQrPaise);
+        if (hasInvalidPiece) {
+          return {
+            success: false,
+            error: `Validation error: One or more split QR amounts exceeded the maximum allowed limit of ₹${(maxPerQrPaise/100).toFixed(2)}.`
+          };
+        }
+
+        return {
+          success: true,
+          splitPaise: splitResults,
+          totalPaise: totalPaise
+        };
+      }
+
+      /* ------------------------------------------------------------------------
+         7. UPI URI GENERATOR
+         ------------------------------------------------------------------------ */
+      function buildUpiUri(pa, pn, amountStr, transactionRef, note) {
+        // NPCI UPI URI Specification format
+        const params = new URLSearchParams();
+        params.append('pa', pa);
+        if (pn) params.append('pn', pn);
+        params.append('am', amountStr);
+        params.append('cu', CONFIG.DEFAULT_CURRENCY);
+        if (transactionRef) params.append('tr', transactionRef);
+        if (note) params.append('tn', note);
+
+        return `upi://pay?${params.toString()}`;
+      }
+
+      function generateUniqueRef(index) {
+        const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const rand = Math.floor(1000 + Math.random() * 9000);
+        return `QR-${datePart}-${index + 1}-${rand}`;
+      }
+
+      /* ------------------------------------------------------------------------
+         8. QR RENDERING & DOM GENERATION
+         ------------------------------------------------------------------------ */
+      function renderQrCard(item) {
+        const card = document.createElement('div');
+        card.className = 'qr-card';
+        card.id = `qr-card-${item.qrNumber}`;
+
+        const isSplitMode = state.mode === 'split';
+        const displayBadge = isSplitMode ? `QR #${item.qrNumber}` : 'Standard Payment';
+
+        card.innerHTML = `
+          <div class="qr-card-header">
+            <span class="qr-badge">${displayBadge}</span>
+            <span class="qr-compliance">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              ${isSplitMode ? '≤ ₹1,999 Safe' : 'Verified Spec'}
+            </span>
+          </div>
+          <div class="qr-amount-display">${formatINR(item.amountINR)}</div>
+          <div class="qr-recipient-display">
+            <span class="qr-recipient-name">${escapeHtml(state.payeeName || 'Recipient')}</span>
+            <span>${escapeHtml(state.payeeVpa)}</span>
+          </div>
+
+          <div class="qr-canvas-wrapper" id="qr-target-${item.qrNumber}" title="Scan to pay ${formatINR(item.amountINR)}"></div>
+
+          <div class="qr-meta-box">
+            <div class="qr-meta-row">
+              <span class="qr-meta-label">Reference ID:</span>
+              <span class="qr-meta-val">${item.tr}</span>
+            </div>
+            <div class="qr-meta-row">
+              <span class="qr-meta-label">Currency:</span>
+              <span class="qr-meta-val">INR (₹)</span>
+            </div>
+          </div>
+
+          <div class="qr-card-actions">
+            <button type="button" class="btn btn-outline btn-sm action-download" data-index="${item.qrNumber - 1}">
+              💾 Download
+            </button>
+            <button type="button" class="btn btn-outline btn-sm action-copy" data-uri="${encodeURIComponent(item.uri)}">
+              🔗 Copy Link
+            </button>
+            <button type="button" class="btn btn-outline btn-sm action-share" data-index="${item.qrNumber - 1}">
+              📤 Share
+            </button>
+            <button type="button" class="btn btn-outline btn-sm action-print" data-index="${item.qrNumber - 1}">
+              🖨️ Print
+            </button>
+          </div>
+        `;
+
+        dom.qrCardsGrid.appendChild(card);
+
+        // Generate the actual QR code using QRCode library
+        const targetContainer = document.getElementById(`qr-target-${item.qrNumber}`);
+        try {
+          new QRCode(targetContainer, {
+            text: item.uri,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } catch (e) {
+          console.error("QR Code library rendering exception:", e);
+          targetContainer.innerHTML = '<p style="color:var(--danger);font-size:0.75rem;">Error generating QR graphic.</p>';
+        }
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      /* ------------------------------------------------------------------------
+         9. GENERATION CONTROLLER
+         ------------------------------------------------------------------------ */
+      function handleGenerate(e) {
+        if (e) e.preventDefault();
+
+        if (!validateInputs()) {
+          showToast('Please fix the errors indicated in the form.', 'error');
+          return;
+        }
+
+        // Extract and sanitize values
+        state.payeeVpa = dom.upiId.value.trim();
+        state.payeeName = dom.payeeName.value.trim();
+        state.mobileRef = dom.mobileNumber.value.trim();
+        const totalAmountINR = parseFloat(dom.amount.value.trim());
+
+        if (state.mode === 'split') {
+          const maxSetting = parseFloat(dom.maxQrAmount.value);
+          state.maxQrAmountINR = (!isNaN(maxSetting) && maxSetting > 0 && maxSetting <= CONFIG.HARD_MAX_QR_AMOUNT_INR) 
+            ? maxSetting 
+            : CONFIG.HARD_MAX_QR_AMOUNT_INR;
+        } else {
+          state.maxQrAmountINR = totalAmountINR;
+        }
+
+        // Clean previous QR rendering
+        dom.qrCardsGrid.innerHTML = '';
+        dom.breakdownTableBody.innerHTML = '';
+        state.generatedQrs = [];
+
+        let splitPaiseArray = [];
+
+        if (state.mode === 'single') {
+          splitPaiseArray = [Math.round(totalAmountINR * 100)];
+        } else {
+          // Mode 2: Smart Under ₹2,000 Split
+          const splitOutcome = computeSplit(totalAmountINR, state.maxQrAmountINR);
+          if (!splitOutcome.success) {
+            showToast(splitOutcome.error, 'error', 4500);
+            return;
+          }
+          splitPaiseArray = splitOutcome.splitPaise;
+        }
+
+        // Check reasonable browser rendering ceiling
+        if (splitPaiseArray.length > CONFIG.MAX_CARD_RENDER_LIMIT) {
+          showToast(`This amount would generate ${splitPaiseArray.length} QR cards. To avoid browser freeze, maximum generation limit is ${CONFIG.MAX_CARD_RENDER_LIMIT} QRs.`, 'error', 5000);
+          return;
+        }
+
+        // Build records
+        let runningTotalPaise = 0;
+        splitPaiseArray.forEach((paise, index) => {
+          runningTotalPaise += paise;
+          const amtINR = paise / 100;
+          const tr = generateUniqueRef(index);
+          const note = state.mobileRef ? `Ref:${state.mobileRef}` : (state.mode === 'split' ? `Split ${index + 1} of ${splitPaiseArray.length}` : 'Payment');
+          const uri = buildUpiUri(state.payeeVpa, state.payeeName, amtINR.toFixed(2), tr, note);
+
+          state.generatedQrs.push({
+            qrNumber: index + 1,
+            amountINR: amtINR,
+            paise: paise,
+            uri: uri,
+            tr: tr
+          });
+        });
+
+        state.totalPaise = runningTotalPaise;
+
+        // Render Summary Data
+        dom.summaryTotalAmount.textContent = formatINR(totalAmountINR);
+        dom.summaryQrCount.textContent = state.generatedQrs.length.toString();
+        dom.summaryMaxPerQr.textContent = state.mode === 'split' ? `₹${state.maxQrAmountINR.toFixed(0)}` : 'N/A';
+        dom.summaryCheckSum.textContent = formatINR(runningTotalPaise / 100);
+        dom.summaryModeBadge.textContent = state.mode === 'single' ? 'Single QR Mode' : 'Smart Split Mode';
+
+        if (state.mode === 'split') {
+          dom.splitComplianceNotice.style.display = 'flex';
+          dom.complianceText.textContent = `All ${state.generatedQrs.length} generated QR codes are strictly ₹${state.maxQrAmountINR} or less. Sum matches 100%.`;
+        } else {
+          dom.splitComplianceNotice.style.display = 'none';
+        }
+
+        // Populate Table breakdown
+        state.generatedQrs.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><strong>QR #${item.qrNumber}</strong></td>
+            <td>${formatINR(item.amountINR)}</td>
+            <td><code>${item.tr}</code></td>
+            <td><span style="color:var(--accent-green);font-weight:600;">Valid</span></td>
+          `;
+          dom.breakdownTableBody.appendChild(row);
+        });
+
+        // Add summary row to table
+        const totalRow = document.createElement('tr');
+        totalRow.innerHTML = `
+          <td><strong>TOTAL</strong></td>
+          <td><strong>${formatINR(runningTotalPaise / 100)}</strong></td>
+          <td><strong>${state.generatedQrs.length} QRs</strong></td>
+          <td><span style="color:var(--primary);font-weight:700;">Verified</span></td>
+        `;
+        dom.breakdownTableBody.appendChild(totalRow);
+
+        // Render Cards to Grid
+        state.generatedQrs.forEach(renderQrCard);
+
+        // Update Visibility States
+        dom.emptyState.style.display = 'none';
+        dom.resultsSection.classList.add('active');
+
+        // Smooth scroll to results
+        dom.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        showToast(
+          state.mode === 'single' 
+            ? 'Single UPI QR generated successfully!' 
+            : `Split into ${state.generatedQrs.length} QR code${state.generatedQrs.length > 1 ? 's' : ''} (all ≤ ₹${state.maxQrAmountINR}).`,
+          'success'
+        );
+      }
+
+      /* ------------------------------------------------------------------------
+         10. DOWNLOAD & EXPORT FUNCTIONALITY
+         ------------------------------------------------------------------------ */
+      function downloadCardQr(index) {
+        const item = state.generatedQrs[index];
+        if (!item) return;
+
+        const targetContainer = document.getElementById(`qr-target-${item.qrNumber}`);
+        if (!targetContainer) return;
+
+        const canvas = targetContainer.querySelector('canvas');
+        const img = targetContainer.querySelector('img');
+
+        let dataUrl = '';
+        if (canvas) {
+          dataUrl = canvas.toDataURL('image/png');
+        } else if (img && img.src) {
+          dataUrl = img.src;
+        }
+
+        if (!dataUrl) {
+          showToast('Unable to export QR image.', 'error');
+          return;
+        }
+
+        // Create high-res branded downloadable canvas badge
+        const exportCanvas = document.createElement('canvas');
+        const ctx = exportCanvas.getContext('2d');
+        exportCanvas.width = 440;
+        exportCanvas.height = 540;
+
+        // Draw crisp card background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+        // Header color bar
+        ctx.fillStyle = '#1e3a8a';
+        ctx.fillRect(0, 0, exportCanvas.width, 10);
+
+        // Header Title
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 22px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(state.payeeName ? state.payeeName : 'UPI Payment', exportCanvas.width / 2, 48);
+
+        // VPA subtext
+        ctx.fillStyle = '#64748b';
+        ctx.font = '14px Inter, sans-serif';
+        ctx.fillText(state.payeeVpa, exportCanvas.width / 2, 74);
+
+        // Amount Display
+        ctx.fillStyle = '#059669';
+        ctx.font = 'bold 30px "JetBrains Mono", monospace';
+        ctx.fillText(formatINR(item.amountINR), exportCanvas.width / 2, 118);
+
+        // Draw QR Image
+        const qrImg = new Image();
+        qrImg.onload = function () {
+          // Draw bordered box for QR
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(68, 140, 304, 304);
+
+          ctx.drawImage(qrImg, 70, 142, 300, 300);
+
+          // Footer meta text
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '12px Inter, sans-serif';
+          ctx.fillText(`Ref: ${item.tr} | Standard NPCI UPI`, exportCanvas.width / 2, 480);
+          ctx.fillText('Scan with GPay, PhonePe, Paytm, BHIM or any UPI App', exportCanvas.width / 2, 502);
+
+          // Trigger download anchor
+          const link = document.createElement('a');
+          const cleanAmt = item.amountINR.toString().replace('.', '_');
+          link.download = `upi-qr-${item.qrNumber}-${cleanAmt}.png`;
+          link.href = exportCanvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          showToast(`Downloaded QR #${item.qrNumber} (${formatINR(item.amountINR)})`, 'success');
+        };
+        qrImg.src = dataUrl;
+      }
+
+      function downloadAllQrs() {
+        if (!state.generatedQrs.length) {
+          showToast('No QR codes available to download.', 'error');
+          return;
+        }
+
+        showToast(`Starting sequential download of ${state.generatedQrs.length} QR code(s)...`, 'info');
+
+        state.generatedQrs.forEach((item, index) => {
+          setTimeout(() => {
+            downloadCardQr(index);
+          }, index * 400); // 400ms stagger to prevent browser download queue blockage
+        });
+      }
+
+      /* ------------------------------------------------------------------------
+         11. CLIPBOARD & SHARING
+         ------------------------------------------------------------------------ */
+      async function copyTextToClipboard(text, successMessage) {
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(text);
+            showToast(successMessage, 'success');
+            return;
+          } catch (err) {
+            console.warn('Clipboard write error:', err);
+          }
+        }
+        
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          showToast(successMessage, 'success');
+        } catch (err) {
+          showToast('Unable to copy to clipboard.', 'error');
+        }
+        document.body.removeChild(textArea);
+      }
+
+      async function shareQr(index) {
+        const item = state.generatedQrs[index];
+        if (!item) return;
+
+        const shareData = {
+          title: `UPI Payment - ${formatINR(item.amountINR)}`,
+          text: `Pay ${formatINR(item.amountINR)} to ${state.payeeName || state.payeeVpa} via UPI:\n${item.uri}`,
+          url: item.uri
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+            showToast('Payment link shared successfully.', 'success');
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              showToast('Could not complete share action.', 'error');
+            }
+          }
+        } else {
+          // Graceful fallback: Copy URI
+          copyTextToClipboard(item.uri, 'Share not supported on this browser. Payment link copied instead!');
+        }
+      }
+
+      function copyBreakdownText() {
+        if (!state.generatedQrs.length) return;
+
+        let breakdown = `UPI Payment Breakdown\n`;
+        breakdown += `Recipient: ${state.payeeName ? state.payeeName + ' (' + state.payeeVpa + ')' : state.payeeVpa}\n`;
+        breakdown += `Total Amount: ${formatINR(state.totalPaise / 100)}\n`;
+        breakdown += `Total QR Codes: ${state.generatedQrs.length}\n`;
+        breakdown += `Max Allowed Per QR: ₹${state.maxQrAmountINR}\n\n`;
+
+        state.generatedQrs.forEach(item => {
+          breakdown += `QR #${item.qrNumber}: ${formatINR(item.amountINR)} [${item.tr}]\n`;
+        });
+
+        breakdown += `\nSum Verified: ${formatINR(state.totalPaise / 100)}`;
+
+        copyTextToClipboard(breakdown, 'Payment breakdown copied to clipboard!');
+      }
+
+      /* ------------------------------------------------------------------------
+         12. RESET & CLEAR LOGIC
+         ------------------------------------------------------------------------ */
+      function handleClear() {
+        dom.upiForm.reset();
+        clearErrors();
+        dom.qrCardsGrid.innerHTML = '';
+        dom.breakdownTableBody.innerHTML = '';
+        state.generatedQrs = [];
+        state.totalPaise = 0;
+        dom.maxQrAmount.value = CONFIG.HARD_MAX_QR_AMOUNT_INR.toString();
+
+        dom.resultsSection.classList.remove('active');
+        dom.emptyState.style.display = 'block';
+
+        showToast('Form and QR results cleared.', 'info');
+      }
+
+      /* ------------------------------------------------------------------------
+         13. EVENT LISTENERS SETUP
+         ------------------------------------------------------------------------ */
+      function setupEventListeners() {
+        // Mode switching
+        dom.tabModeSingle.addEventListener('click', () => {
+          if (state.mode === 'single') return;
+          state.mode = 'single';
+          dom.tabModeSingle.classList.add('active');
+          dom.tabModeSingle.setAttribute('aria-selected', 'true');
+          dom.tabModeSplit.classList.remove('active');
+          dom.tabModeSplit.setAttribute('aria-selected', 'false');
+          dom.advancedSplitOptions.style.display = 'none';
+          dom.amountHint.textContent = 'Enter the exact payment amount in Indian Rupees (₹).';
+        });
+
+        dom.tabModeSplit.addEventListener('click', () => {
+          if (state.mode === 'split') return;
+          state.mode = 'split';
+          dom.tabModeSplit.classList.add('active');
+          dom.tabModeSplit.setAttribute('aria-selected', 'true');
+          dom.tabModeSingle.classList.remove('active');
+          dom.tabModeSingle.setAttribute('aria-selected', 'false');
+          dom.advancedSplitOptions.style.display = 'block';
+          dom.amountHint.textContent = 'Enter total amount. Each generated QR will strictly be capped at ₹1,999 or less.';
+        });
+
+        // Advanced Options Toggle
+        dom.advOptionsTrigger.addEventListener('click', () => {
+          const isExpanded = dom.advOptionsContent.classList.toggle('expanded');
+          dom.advOptionsIcon.textContent = isExpanded ? '▲' : '▼';
+        });
+
+        // Enforce max limit field strictly <= 1999
+        dom.maxQrAmount.addEventListener('input', () => {
+          const val = parseFloat(dom.maxQrAmount.value);
+          if (val > CONFIG.HARD_MAX_QR_AMOUNT_INR) {
+            dom.maxQrAmount.value = CONFIG.HARD_MAX_QR_AMOUNT_INR.toString();
+            setError('maxQrAmount', 'Under-₹2,000 mode strictly forbids limits higher than ₹1,999.');
+          } else {
+            clearErrors();
+          }
+        });
+
+        // Form Submit
+        dom.upiForm.addEventListener('submit', handleGenerate);
+        dom.btnClear.addEventListener('click', handleClear);
+
+        // Summary Toolbar Actions
+        dom.btnDownloadAll.addEventListener('click', downloadAllQrs);
+        dom.btnCopyBreakdown.addEventListener('click', copyBreakdownText);
+        dom.btnToggleBreakdownTable.addEventListener('click', () => {
+          const isTableOpen = dom.breakdownTableBox.classList.toggle('active');
+          dom.btnToggleBreakdownTable.textContent = isTableOpen ? '📊 Hide Table Breakdown' : '📊 View Table Breakdown';
+        });
+        dom.btnPrintPage.addEventListener('click', () => {
+          window.print();
+        });
+
+        // Accordion for "How it works"
+        dom.btnHowItWorks.addEventListener('click', () => {
+          const expanded = dom.btnHowItWorks.classList.toggle('expanded');
+          dom.howItWorksPanel.classList.toggle('expanded');
+          dom.btnHowItWorks.setAttribute('aria-expanded', expanded.toString());
+        });
+
+        // Delegated clicks inside QR Cards Grid
+        dom.qrCardsGrid.addEventListener('click', (e) => {
+          const btn = e.target.closest('button');
+          if (!btn) return;
+
+          if (btn.classList.contains('action-download')) {
+            const idx = parseInt(btn.getAttribute('data-index'), 10);
+            downloadCardQr(idx);
+          } else if (btn.classList.contains('action-copy')) {
+            const uri = decodeURIComponent(btn.getAttribute('data-uri'));
+            copyTextToClipboard(uri, 'UPI Payment link copied to clipboard!');
+          } else if (btn.classList.contains('action-share')) {
+            const idx = parseInt(btn.getAttribute('data-index'), 10);
+            shareQr(idx);
+          } else if (btn.classList.contains('action-print')) {
+            window.print();
+          }
+        });
+
+        // Live input cleaning for mobile reference
+        dom.mobileNumber.addEventListener('input', (e) => {
+          // Normalize formatting visually without mangling
+          let val = e.target.value.replace(/[^0-9+ ]/g, '');
+          e.target.value = val;
+        });
+      }
+
+      /* ------------------------------------------------------------------------
+         14. INITIALIZATION
+         ------------------------------------------------------------------------ */
+      function init() {
+        setupEventListeners();
+      }
+
+      // Run on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
+  </script>
+</body>
+</html>
